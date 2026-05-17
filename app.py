@@ -183,6 +183,14 @@ def _register_main_routes(app: Flask) -> None:
     def delete_expense(id):
         return "Delete expense — coming in Step 9"
 
+    @app.route("/terms")
+    def terms():
+        return render_template("terms.html")
+
+    @app.route("/privacy")
+    def privacy():
+        return render_template("privacy.html")
+
 
 app = create_app()
 

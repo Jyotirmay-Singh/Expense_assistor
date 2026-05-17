@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — Spendly{% endblock %}
+
+{% block head %}
+<style>
+    .privacy-wrap {
+        max-width: 800px;
+        margin: 3rem auto 5rem;
+        padding: 0 1.5rem;
+    }
+
+    .privacy-wrap h1 {
+        font-family: var(--font-display);
+        font-size: 2.4rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .privacy-wrap .effective-date {
+        font-size: 0.875rem;
+        color: var(--ink-muted);
+        margin-bottom: 2rem;
+    }
+
+    /* "Privacy at a Glance" summary card */
+    .glance-card {
+        background: var(--accent-light);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 3rem;
+    }
+
+    .glance-card h2 {
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        color: var(--accent);
+    }
+
+    .glance-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.875rem;
+    }
+
+    .glance-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        line-height: 1.5;
+    }
+
+    .glance-dot {
+        flex-shrink: 0;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        margin-top: 0.4rem;
+    }
+
+    /* Section headers */
+    .privacy-wrap h2 {
+        font-family: var(--font-body);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--ink);
+        margin-top: 2.5rem;
+        margin-bottom: 0.6rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+    .privacy-wrap p,
+    .privacy-wrap li {
+        color: var(--ink-soft);
+        line-height: 1.75;
+        margin-bottom: 0.875rem;
+        font-size: 0.95rem;
+    }
+
+    .privacy-wrap ul {
+        padding-left: 1.5rem;
+        margin-bottom: 0.875rem;
+    }
+
+    /* Placeholder highlight — matches terms.html style */
+    .ph {
+        background: #fef9c3;
+        border: 1px dashed #ca8a04;
+        border-radius: 4px;
+        padding: 0 4px;
+        font-weight: 600;
+        color: #92400e;
+    }
+
+    @media (max-width: 600px) {
+        .privacy-wrap h1 { font-size: 1.8rem; }
+        .glance-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="privacy-wrap">
+
+    <h1>Privacy Policy</h1>
+    <p class="effective-date">Effective Date: <span class="ph">[EFFECTIVE DATE]</span></p>
+
+    <!-- ── Privacy at a Glance ── -->
+    <div class="glance-card">
+        <h2>Privacy at a Glance</h2>
+        <div class="glance-grid">
+            <div class="glance-item">
+                <span class="glance-dot"></span>
+                <span>We collect only the data needed to run your expense tracker.</span>
+            </div>
+            <div class="glance-item">
+                <span class="glance-dot"></span>
+                <span>Your financial data is never sold to third parties.</span>
+            </div>
+            <div class="glance-item">
+                <span class="glance-dot"></span>
+                <span>You can request export or deletion of your data at any time.</span>
+            </div>
+            <div class="glance-item">
+                <span class="glance-dot"></span>
+                <span>We use industry-standard encryption for data in transit and at rest.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 1. Information We Collect ── -->
+    <h2>1. Information We Collect</h2>
+
+    <p><strong>Personal Information</strong></p>
+    <ul>
+        <li>Name and email address provided during account registration.</li>
+        <li>Authentication credentials (passwords are stored as one-way hashes — never in plain text).</li>
+        <li>Communication records if you contact our support team.</li>
+    </ul>
+
+    <p><strong>Financial Information</strong></p>
+    <ul>
+        <li>Expense entries, categories, amounts, dates, and notes that you manually log in the Service.</li>
+        <li>If bank integrations are enabled: read-only transaction data retrieved through authorised third-party connectors. We do not store your banking credentials.</li>
+    </ul>
+
+    <p><strong>Usage &amp; Technical Information</strong></p>
+    <ul>
+        <li>Browser type, operating system, and IP address for security and analytics purposes.</li>
+        <li>Pages visited and features used within the Service (aggregated, not linked to individuals).</li>
+    </ul>
+
+    <!-- ── 2. How We Use Your Data ── -->
+    <h2>2. How We Use Your Data</h2>
+    <p>
+        <span class="ph">[COMPANY NAME]</span> uses the information collected for the following purposes:
+    </p>
+    <ul>
+        <li>Providing, maintaining, and improving the Spendly Service.</li>
+        <li>Authenticating your identity and keeping your account secure.</li>
+        <li>Generating spending summaries, reports, and insights within your account.</li>
+        <li>Sending transactional emails (account confirmation, password reset). We do not send marketing emails without your explicit opt-in.</li>
+        <li>Diagnosing technical issues and monitoring for fraudulent or abusive activity.</li>
+        <li>Complying with applicable legal obligations.</li>
+    </ul>
+
+    <!-- ── 3. Third-Party Service Providers ── -->
+    <h2>3. Third-Party Service Providers</h2>
+    <p>
+        We may engage trusted third-party service providers to support the operation of the Service.
+        These providers are permitted to access your data only to perform tasks on our behalf and
+        are contractually obligated not to use it for any other purpose. Categories of providers include:
+    </p>
+    <ul>
+        <li><strong>Cloud infrastructure:</strong> Hosting and database services for storing application data.</li>
+        <li><strong>Bank / payment connectors:</strong> Where enabled, read-only integration partners that surface transaction data in your dashboard. These partners are subject to their own privacy policies, which we encourage you to review.</li>
+        <li><strong>Analytics:</strong> Aggregated, anonymised usage statistics to help us improve the product.</li>
+        <li><strong>Email delivery:</strong> Transactional email providers for account and security notifications.</li>
+    </ul>
+    <p>
+        A current list of our sub-processors is available on request at
+        <span class="ph">[PRIVACY CONTACT EMAIL]</span>.
+    </p>
+
+    <!-- ── 4. Data Security & Retention ── -->
+    <h2>4. Data Security &amp; Retention</h2>
+    <p>
+        <span class="ph">[COMPANY NAME]</span> implements commercially reasonable technical and
+        organisational measures — including TLS encryption in transit, encrypted storage at rest,
+        and access controls — to protect your data from unauthorised access, alteration, or disclosure.
+    </p>
+    <p>
+        We retain your data for as long as your account remains active or as required to provide
+        the Service. If you delete your account, we will delete or anonymise your personal data
+        within <span class="ph">[RETENTION PERIOD, e.g. 30 days]</span>, except where retention
+        is required by law.
+    </p>
+    <p>
+        No method of transmission over the internet is 100% secure. If you believe your account
+        has been compromised, contact us immediately at <span class="ph">[PRIVACY CONTACT EMAIL]</span>.
+    </p>
+
+    <!-- ── 5. User Rights ── -->
+    <h2>5. Your Rights</h2>
+    <p>
+        Depending on your jurisdiction, you may have the following rights regarding your personal data.
+        To exercise any of these rights, contact our Data Protection Officer at
+        <span class="ph">[DATA PROTECTION OFFICER EMAIL]</span>.
+    </p>
+    <ul>
+        <li><strong>Access:</strong> Request a copy of the personal data we hold about you.</li>
+        <li><strong>Rectification:</strong> Request correction of inaccurate or incomplete data.</li>
+        <li><strong>Erasure:</strong> Request deletion of your personal data ("right to be forgotten") where no legal basis requires us to retain it.</li>
+        <li><strong>Portability:</strong> Receive your data in a structured, machine-readable format.</li>
+        <li><strong>Restriction &amp; Objection:</strong> Request that we limit or stop certain processing activities.</li>
+        <li><strong>Withdraw Consent:</strong> Where processing is based on consent, withdraw it at any time without affecting prior processing.</li>
+    </ul>
+    <p>
+        If you are located in the European Economic Area, you also have the right to lodge a complaint
+        with your local supervisory authority. If you are a California resident, you may have additional
+        rights under the CCPA — contact us at <span class="ph">[PRIVACY CONTACT EMAIL]</span> for details.
+    </p>
+
+    <!-- ── Contact ── -->
+    <h2>Contact Us</h2>
+    <p>
+        If you have questions or concerns about this Privacy Policy, please reach out to
+        <span class="ph">[COMPANY NAME]</span> at <span class="ph">[PRIVACY CONTACT EMAIL]</span>.
+    </p>
+
+</div>
+{% endblock %}
