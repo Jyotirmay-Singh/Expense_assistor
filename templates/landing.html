@@ -5,7 +5,7 @@
 {% block content %}
 
 <section class="hero">
-    <div class="hero-inner">
+    <div class="hero-inner" data-aos="fade-right" data-aos-duration="800">
         <div class="hero-badge">Personal Finance Tracker</div>
         <h1 class="hero-title">
             Know where your<br>
@@ -21,10 +21,11 @@
             <a href="{{ url_for('login') }}" class="btn-ghost">Sign in</a>
         </div>
     </div>
-    <div class="hero-visual">
+
+    <div class="hero-visual" data-aos="fade-left" data-aos-duration="800" data-aos-delay="150">
         <div class="mock-card">
             <div class="mock-card-header">
-                <span class="mock-label">March 2026</span>
+                <span class="mock-label">May 2026</span>
                 <span class="mock-total">₹12,450</span>
             </div>
             <div class="mock-bars">
@@ -61,27 +62,57 @@
     </div>
 </section>
 
+<section class="stats-bar" data-aos="fade-up" data-aos-duration="600">
+    <div class="stats-inner">
+        <div class="stat-item">
+            <span class="stat-number">10k+</span>
+            <span class="stat-label">Active users</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-number">₹2Cr+</span>
+            <span class="stat-label">Expenses tracked</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-number">8</span>
+            <span class="stat-label">Categories</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-number">100%</span>
+            <span class="stat-label">Free forever</span>
+        </div>
+    </div>
+</section>
+
 <section class="features">
     <div class="features-inner">
-        <div class="feature-card">
-            <div class="feature-icon">₹</div>
+        <div class="feature-card" data-aos="fade-up" data-aos-delay="0">
+            <div class="feature-icon-wrap">
+                <i data-lucide="receipt" class="feature-lucide"></i>
+            </div>
             <h3 class="feature-title">Log expenses instantly</h3>
             <p class="feature-body">Add any expense in seconds. Category, amount, date, description — all in one simple form.</p>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">◎</div>
+        <div class="feature-card" data-aos="fade-up" data-aos-delay="120">
+            <div class="feature-icon-wrap">
+                <i data-lucide="pie-chart" class="feature-lucide"></i>
+            </div>
             <h3 class="feature-title">Understand your patterns</h3>
             <p class="feature-body">See exactly where your money goes with category breakdowns and monthly summaries.</p>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">◷</div>
+        <div class="feature-card" data-aos="fade-up" data-aos-delay="240">
+            <div class="feature-icon-wrap">
+                <i data-lucide="calendar-range" class="feature-lucide"></i>
+            </div>
             <h3 class="feature-title">Filter by time period</h3>
             <p class="feature-body">View your spending for any date range — last week, last month, or a custom period.</p>
         </div>
     </div>
 </section>
 
-<section class="cta-section">
+<section class="cta-section" data-aos="fade-up" data-aos-duration="700">
     <div class="cta-inner">
         <h2 class="cta-title">Ready to take control?</h2>
         <p class="cta-body">Join thousands of people who track their expenses with Spendly.</p>

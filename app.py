@@ -1,17 +1,12 @@
 import os
-import re
 
 from flask import Flask, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from email_validator import validate_email, EmailNotValidError
+from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from database.db import db, migrate, login_manager, csrf, init_db, seed_db, User
-
-# At least 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special character
-_PASSWORD_RE = re.compile(
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,72}$'
-)
+from database.schemas import RegisterSchema, LoginSchema, extract_messages
 
 
 def create_app() -> Flask:
@@ -53,39 +48,26 @@ def _register_auth_routes(app: Flask) -> None:
             return redirect(url_for("dashboard"))
 
         if request.method == "POST":
-            name = request.form.get("name", "").strip()
-            raw_email = request.form.get("email", "").strip()
-            password = request.form.get("password", "")
+            raw_name  = request.form.get("name", "")
+            raw_email = request.form.get("email", "")
+            raw_pass  = request.form.get("password", "")
 
+            # --- Pydantic validation ---
             try:
-                errors = []
+                data = RegisterSchema(name=raw_name, email=raw_email, password=raw_pass)
+            except ValidationError as exc:
+                for msg in extract_messages(exc):
+                    flash(msg, "error")
+                return render_template("register.html", name=raw_name, email=raw_email)
 
-                if len(name) < 2:
-                    errors.append("Name must be at least 2 characters.")
-
-                try:
-                    email = validate_email(raw_email, check_deliverability=False).normalized
-                except EmailNotValidError as exc:
-                    errors.append(str(exc))
-                    email = raw_email
-
-                if not _PASSWORD_RE.match(password):
-                    errors.append(
-                        "Password must be 8–72 characters and include an uppercase letter, "
-                        "a lowercase letter, a digit, and a special character (@$!%*#?&)."
-                    )
-
-                if errors:
-                    for err in errors:
-                        flash(err, "error")
-                    return render_template("register.html", name=name, email=raw_email)
-
-                if User.query.filter_by(email=email).first():
+            # --- DB operations ---
+            try:
+                if User.query.filter_by(email=data.email).first():
                     flash("An account with this email already exists.", "error")
-                    return render_template("register.html", name=name, email=email)
+                    return render_template("register.html", name=data.name, email=data.email)
 
-                user = User(name=name, email=email)
-                user.set_password(password)
+                user = User(name=data.name, email=data.email)
+                user.set_password(data.password)
                 db.session.add(user)
                 db.session.commit()
 
@@ -97,7 +79,7 @@ def _register_auth_routes(app: Flask) -> None:
                 db.session.rollback()
                 current_app.logger.error("DB error during register: %s", exc)
                 flash("A database error occurred. Please try again.", "error")
-                return render_template("register.html", name=name, email=raw_email)
+                return render_template("register.html", name=data.name, email=data.email)
             except Exception as exc:
                 current_app.logger.error("Unexpected register error: %s", exc)
                 flash("An unexpected error occurred. Please try again.", "error")
@@ -112,24 +94,22 @@ def _register_auth_routes(app: Flask) -> None:
             return redirect(url_for("dashboard"))
 
         if request.method == "POST":
-            raw_email = request.form.get("email", "").strip()
-            password = request.form.get("password", "")
+            raw_email = request.form.get("email", "")
+            raw_pass  = request.form.get("password", "")
 
+            # --- Pydantic validation ---
             try:
-                if not raw_email or not password:
-                    flash("Email and password are required.", "error")
-                    return render_template("login.html", email=raw_email)
+                data = LoginSchema(email=raw_email, password=raw_pass)
+            except ValidationError:
+                # Generic message — don't reveal whether the email exists
+                flash("Invalid email or password.", "error")
+                return render_template("login.html", email=raw_email)
 
-                try:
-                    email = validate_email(raw_email, check_deliverability=False).normalized
-                except EmailNotValidError:
-                    # Generic message — don't reveal whether the email exists
-                    flash("Invalid email or password.", "error")
-                    return render_template("login.html", email=raw_email)
+            # --- DB operations ---
+            try:
+                user = User.query.filter_by(email=data.email).first()
 
-                user = User.query.filter_by(email=email).first()
-
-                if user is None or not user.check_password(password):
+                if user is None or not user.check_password(data.password):
                     flash("Invalid email or password.", "error")
                     return render_template("login.html", email=raw_email)
 

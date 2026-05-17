@@ -4,9 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Spendly{% endblock %}</title>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- AOS scroll animations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
+
+    <!-- Alpine.js (must be deferred, loaded before body content) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+    <!-- App styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block head %}{% endblock %}
 </head>
@@ -15,13 +25,19 @@
     <nav class="navbar">
         <div class="nav-inner">
             <a href="{{ url_for('landing') }}" class="nav-brand">
-                <span class="brand-icon">◈</span>
+                <i data-lucide="wallet" class="brand-lucide"></i>
                 <span class="brand-name">Spendly</span>
             </a>
             <div class="nav-links">
                 {% if current_user.is_authenticated %}
-                    <span class="nav-user">{{ current_user.name }}</span>
-                    <a href="{{ url_for('logout') }}" class="nav-cta">Sign out</a>
+                    <span class="nav-user">
+                        <i data-lucide="user-circle" class="icon-xs"></i>
+                        {{ current_user.name }}
+                    </span>
+                    <a href="{{ url_for('logout') }}" class="nav-cta">
+                        <i data-lucide="log-out" class="icon-xs"></i>
+                        Sign out
+                    </a>
                 {% else %}
                     <a href="{{ url_for('login') }}">Sign in</a>
                     <a href="{{ url_for('register') }}" class="nav-cta">Get started</a>
@@ -34,7 +50,12 @@
         {% if messages %}
             <div class="flash-container">
                 {% for category, message in messages %}
-                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                    <div class="flash flash-{{ category }}">
+                        {% if category == 'success' %}<i data-lucide="check-circle" class="icon-xs"></i>
+                        {% elif category == 'error' %}<i data-lucide="alert-circle" class="icon-xs"></i>
+                        {% else %}<i data-lucide="info" class="icon-xs"></i>{% endif %}
+                        {{ message }}
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}
@@ -46,12 +67,17 @@
 
     <footer class="footer">
         <div class="footer-inner">
-            <span class="brand-icon">◈</span>
+            <i data-lucide="wallet" class="footer-lucide"></i>
             <span class="footer-name">Spendly</span>
             <p class="footer-copy">Track every rupee. Own your finances.</p>
         </div>
     </footer>
 
+    <!-- Lucide icons -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+    <!-- AOS -->
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    <!-- App JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
