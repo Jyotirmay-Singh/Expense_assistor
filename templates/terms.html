@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Terms and Conditions — Spendly{% endblock %}
+
+{% block head %}
+<style>
+    .terms-container {
+        max-width: 760px;
+        margin: 3rem auto 5rem;
+        padding: 0 1.5rem;
+        line-height: 1.75;
+    }
+
+    .terms-container h1 {
+        font-family: 'DM Serif Display', serif;
+        font-size: 2.4rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .terms-container .effective-date {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 2.5rem;
+    }
+
+    .terms-container h2 {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-top: 2.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .terms-container p,
+    .terms-container li {
+        color: #374151;
+        margin-bottom: 1rem;
+    }
+
+    .terms-container ul {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .terms-placeholder {
+        background: #fef9c3;
+        border: 1px dashed #ca8a04;
+        border-radius: 4px;
+        padding: 0 4px;
+        font-weight: 600;
+        color: #92400e;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="terms-container">
+    <h1>Terms and Conditions</h1>
+    <p class="effective-date">Effective Date: <span class="terms-placeholder">[EFFECTIVE DATE]</span></p>
+
+    <p>
+        Please read these Terms and Conditions carefully before using Spendly, operated by
+        <span class="terms-placeholder">[COMPANY NAME]</span>. By accessing or using the Service,
+        you agree to be bound by these Terms. If you do not agree, do not use the Service.
+    </p>
+
+    <h2>1. Acceptance of Terms</h2>
+    <p>
+        By creating an account or otherwise accessing Spendly, you confirm that you are at least
+        18 years of age, have read and understood these Terms, and agree to comply with them.
+        If you are accessing the Service on behalf of an organisation, you represent that you have
+        the authority to bind that organisation to these Terms.
+    </p>
+
+    <h2>2. Use of Service</h2>
+    <p>
+        Spendly grants you a limited, non-exclusive, non-transferable licence to use the Service
+        for your personal or internal business expense-tracking purposes. You agree not to:
+    </p>
+    <ul>
+        <li>Use the Service for any unlawful purpose or in violation of any applicable regulations.</li>
+        <li>Attempt to gain unauthorised access to any part of the Service or its related systems.</li>
+        <li>Reverse-engineer, decompile, or otherwise attempt to derive the source code of the Service.</li>
+        <li>Upload or transmit any malicious code, viruses, or disruptive data.</li>
+        <li>Resell or sublicence access to the Service without prior written consent from
+            <span class="terms-placeholder">[COMPANY NAME]</span>.</li>
+    </ul>
+
+    <h2>3. Data Privacy &amp; Security</h2>
+    <p>
+        Your use of the Service is also governed by our Privacy Policy, which is incorporated
+        into these Terms by reference. <span class="terms-placeholder">[COMPANY NAME]</span>
+        implements industry-standard security measures to protect your data. However, no method
+        of electronic transmission or storage is 100% secure, and we cannot guarantee absolute
+        security.
+    </p>
+    <p>
+        You are responsible for maintaining the confidentiality of your account credentials.
+        Please notify us immediately at <span class="terms-placeholder">[CONTACT EMAIL]</span>
+        if you suspect any unauthorised access to your account.
+    </p>
+
+    <h2>4. Limitations of Liability</h2>
+    <p>
+        To the fullest extent permitted by applicable law,
+        <span class="terms-placeholder">[COMPANY NAME]</span> and its affiliates, officers,
+        employees, and licensors shall not be liable for any indirect, incidental, special,
+        consequential, or punitive damages — including loss of data, revenue, or profits —
+        arising out of or in connection with your use of, or inability to use, the Service,
+        even if advised of the possibility of such damages.
+    </p>
+    <p>
+        In no event shall our total aggregate liability to you exceed the amount paid by you,
+        if any, for access to the Service in the twelve (12) months preceding the claim.
+    </p>
+
+    <h2>5. Changes to Terms</h2>
+    <p>
+        <span class="terms-placeholder">[COMPANY NAME]</span> reserves the right to modify
+        these Terms at any time. When changes are made, we will update the Effective Date at
+        the top of this page and, where appropriate, notify you by email at the address
+        associated with your account. Your continued use of the Service after any such changes
+        constitutes your acceptance of the new Terms.
+    </p>
+    <p>
+        For questions about these Terms, contact us at
+        <span class="terms-placeholder">[CONTACT EMAIL]</span>.
+    </p>
+</div>
+{% endblock %}

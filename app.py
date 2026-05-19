@@ -1,12 +1,14 @@
 import os
 
-from flask import Flask, render_template, redirect, url_for, request, flash, current_app
-from flask_login import login_user, logout_user, login_required, current_user
+from flask import Flask, current_app, flash, redirect, render_template, request, url_for
+from flask.typing import ResponseReturnValue
+from flask_login import current_user, login_required, login_user, logout_user
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from database.db import db, migrate, login_manager, csrf, init_db, seed_db, User
-from database.schemas import RegisterSchema, LoginSchema, extract_messages
+from database.db import User, csrf, db, login_manager, migrate, seed_db
+from database.schemas import LoginSchema, RegisterSchema, extract_messages
 
 
 def create_app() -> Flask:
@@ -16,14 +18,12 @@ def create_app() -> Flask:
         SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret-change-in-production"),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             "DATABASE_URL",
-            "sqlite:///{}".format(os.path.join(app.instance_path, "spendly.db")),
+            "postgresql+psycopg2://spendly:spendly@localhost:5544/spendly",
         ),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
         WTF_CSRF_TIME_LIMIT=3600,
     )
-
-    os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -43,14 +43,14 @@ def create_app() -> Flask:
 def _register_auth_routes(app: Flask) -> None:
 
     @app.route("/register", methods=["GET", "POST"])
-    def register():
+    def register() -> ResponseReturnValue:
         if current_user.is_authenticated:
             return redirect(url_for("dashboard"))
 
         if request.method == "POST":
-            raw_name  = request.form.get("name", "")
+            raw_name = request.form.get("name", "")
             raw_email = request.form.get("email", "")
-            raw_pass  = request.form.get("password", "")
+            raw_pass = request.form.get("password", "")
 
             # --- Pydantic validation ---
             try:
@@ -62,7 +62,11 @@ def _register_auth_routes(app: Flask) -> None:
 
             # --- DB operations ---
             try:
-                if User.query.filter_by(email=data.email).first():
+                existing = db.session.execute(
+                    select(User).filter_by(email=data.email)
+                ).scalar_one_or_none()
+
+                if existing is not None:
                     flash("An account with this email already exists.", "error")
                     return render_template("register.html", name=data.name, email=data.email)
 
@@ -87,15 +91,14 @@ def _register_auth_routes(app: Flask) -> None:
 
         return render_template("register.html")
 
-
     @app.route("/login", methods=["GET", "POST"])
-    def login():
+    def login() -> ResponseReturnValue:
         if current_user.is_authenticated:
             return redirect(url_for("dashboard"))
 
         if request.method == "POST":
             raw_email = request.form.get("email", "")
-            raw_pass  = request.form.get("password", "")
+            raw_pass = request.form.get("password", "")
 
             # --- Pydantic validation ---
             try:
@@ -107,7 +110,9 @@ def _register_auth_routes(app: Flask) -> None:
 
             # --- DB operations ---
             try:
-                user = User.query.filter_by(email=data.email).first()
+                user = db.session.execute(
+                    select(User).filter_by(email=data.email)
+                ).scalar_one_or_none()
 
                 if user is None or not user.check_password(data.password):
                     flash("Invalid email or password.", "error")
@@ -134,10 +139,9 @@ def _register_auth_routes(app: Flask) -> None:
 
         return render_template("login.html")
 
-
     @app.route("/logout")
     @login_required
-    def logout():
+    def logout() -> ResponseReturnValue:
         try:
             name = current_user.name
             logout_user()
@@ -155,38 +159,45 @@ def _register_auth_routes(app: Flask) -> None:
 def _register_main_routes(app: Flask) -> None:
 
     @app.route("/")
-    def landing():
+    def landing() -> ResponseReturnValue:
         return render_template("landing.html")
 
     @app.route("/dashboard")
     @login_required
-    def dashboard():
+    def dashboard() -> ResponseReturnValue:
         return f"Dashboard — welcome, {current_user.name} (coming in Step 5)"
 
     @app.route("/profile")
     @login_required
-    def profile():
+    def profile() -> ResponseReturnValue:
         return "Profile page — coming in Step 4"
 
     @app.route("/expenses/add")
     @login_required
-    def add_expense():
+    def add_expense() -> ResponseReturnValue:
         return "Add expense — coming in Step 7"
 
     @app.route("/expenses/<int:id>/edit")
     @login_required
-    def edit_expense(id):
+    def edit_expense(id: int) -> ResponseReturnValue:
         return "Edit expense — coming in Step 8"
 
     @app.route("/expenses/<int:id>/delete")
     @login_required
-    def delete_expense(id):
+    def delete_expense(id: int) -> ResponseReturnValue:
         return "Delete expense — coming in Step 9"
+
+    @app.route("/terms")
+    def terms() -> ResponseReturnValue:
+        return render_template("terms.html")
+
+    @app.route("/privacy")
+    def privacy() -> ResponseReturnValue:
+        return render_template("privacy.html")
 
 
 app = create_app()
 
 if __name__ == "__main__":
-    init_db(app)
     seed_db(app)
     app.run(debug=True, port=8000)
