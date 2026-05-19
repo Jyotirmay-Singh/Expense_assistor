@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 
 from flask import Flask, current_app, flash, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
@@ -8,7 +9,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from database.db import User, csrf, db, login_manager, migrate, seed_db
-from database.schemas import LoginSchema, RegisterSchema, extract_messages
+from database.schemas import (
+    ALLOWED_CURRENCIES,
+    LoginSchema,
+    RegisterSchema,
+    extract_messages,
+)
 
 
 def create_app() -> Flask:
@@ -40,6 +46,7 @@ def create_app() -> Flask:
 # Auth routes                                                          #
 # ------------------------------------------------------------------ #
 
+
 def _register_auth_routes(app: Flask) -> None:
 
     @app.route("/register", methods=["GET", "POST"])
@@ -49,16 +56,41 @@ def _register_auth_routes(app: Flask) -> None:
 
         if request.method == "POST":
             raw_name = request.form.get("name", "")
+            raw_display_name = request.form.get("display_name", "")
             raw_email = request.form.get("email", "")
+            raw_currency = request.form.get("default_currency", "INR")
             raw_pass = request.form.get("password", "")
+            accepted = request.form.get("accept_terms") == "on"
+
+            ctx: dict[str, object] = {
+                "name": raw_name,
+                "display_name": raw_display_name,
+                "email": raw_email,
+                "default_currency": raw_currency or "INR",
+                "accepted": accepted,
+                "currencies": ALLOWED_CURRENCIES,
+            }
 
             # --- Pydantic validation ---
             try:
-                data = RegisterSchema(name=raw_name, email=raw_email, password=raw_pass)
+                data = RegisterSchema(
+                    name=raw_name,
+                    display_name=raw_display_name,
+                    email=raw_email,
+                    default_currency=raw_currency,
+                    password=raw_pass,
+                    accept_terms=accepted,
+                )
             except ValidationError as exc:
                 for msg in extract_messages(exc):
                     flash(msg, "error")
-                return render_template("register.html", name=raw_name, email=raw_email)
+                return render_template("register.html", **ctx)
+
+            # Schema succeeded — use normalised values for subsequent re-renders.
+            ctx["name"] = data.name
+            ctx["display_name"] = data.display_name
+            ctx["email"] = data.email
+            ctx["default_currency"] = data.default_currency
 
             # --- DB operations ---
             try:
@@ -68,28 +100,42 @@ def _register_auth_routes(app: Flask) -> None:
 
                 if existing is not None:
                     flash("An account with this email already exists.", "error")
-                    return render_template("register.html", name=data.name, email=data.email)
+                    return render_template("register.html", **ctx)
 
-                user = User(name=data.name, email=data.email)
+                user = User(
+                    name=data.name,
+                    display_name=data.display_name,
+                    email=data.email,
+                    default_currency=data.default_currency,
+                    terms_accepted_at=datetime.now(timezone.utc),
+                )
                 user.set_password(data.password)
                 db.session.add(user)
                 db.session.commit()
 
                 login_user(user, remember=False)
-                flash(f"Welcome to Spendly, {user.name}!", "success")
+                flash(f"Welcome to Spendly, {user.display_name}!", "success")
                 return redirect(url_for("dashboard"))
 
             except SQLAlchemyError as exc:
                 db.session.rollback()
                 current_app.logger.error("DB error during register: %s", exc)
                 flash("A database error occurred. Please try again.", "error")
-                return render_template("register.html", name=data.name, email=data.email)
+                return render_template("register.html", **ctx)
             except Exception as exc:
                 current_app.logger.error("Unexpected register error: %s", exc)
                 flash("An unexpected error occurred. Please try again.", "error")
-                return render_template("register.html")
+                return render_template("register.html", **ctx)
 
-        return render_template("register.html")
+        return render_template(
+            "register.html",
+            name="",
+            display_name="",
+            email="",
+            default_currency="INR",
+            accepted=False,
+            currencies=ALLOWED_CURRENCIES,
+        )
 
     @app.route("/login", methods=["GET", "POST"])
     def login() -> ResponseReturnValue:
@@ -155,6 +201,7 @@ def _register_auth_routes(app: Flask) -> None:
 # ------------------------------------------------------------------ #
 # Main / protected routes                                              #
 # ------------------------------------------------------------------ #
+
 
 def _register_main_routes(app: Flask) -> None:
 

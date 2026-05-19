@@ -102,7 +102,6 @@ Any new pip packages. If none: state "No new dependencies".
 
 ## Rules for implementation
 Specific constraints Claude must follow. Always include:
-- No SQLAlchemy or ORMs
 - Parameterised queries only
 - Passwords hashed with werkzeug
 - Use CSS variables — never hardcode hex values
