@@ -15,7 +15,7 @@
 
         <div class="auth-card">
             <form method="POST" action="{{ url_for('register') }}" novalidate
-                  x-data="{ loading: false }"
+                  x-data="{ loading: false, accepted: {{ (accepted or false) | tojson }} }"
                   @submit="loading = true">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -29,6 +29,15 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="display_name">Display name</label>
+                    <input type="text" id="display_name" name="display_name"
+                           class="form-input"
+                           placeholder="What should we call you?"
+                           value="{{ display_name or '' }}"
+                           maxlength="60" required autocomplete="nickname">
+                </div>
+
+                <div class="form-group">
                     <label for="email">Email address</label>
                     <input type="email" id="email" name="email"
                            class="form-input"
@@ -37,28 +46,26 @@
                            required>
                 </div>
 
-                <div class="form-group"
-                     x-data="{
-                         pass: '',
-                         show: false,
-                         get score() {
-                             let s = 0;
-                             if (this.pass.length >= 8)         s++;
-                             if (/[A-Z]/.test(this.pass))       s++;
-                             if (/[0-9]/.test(this.pass))       s++;
-                             if (/[@$!%*#?&]/.test(this.pass))  s++;
-                             return s;
-                         },
-                         labels: ['', 'Weak', 'Fair', 'Good', 'Strong'],
-                         colors: ['', '#e74c3c', '#e67e22', '#f0ad00', '#27ae60']
-                     }">
+                <div class="form-group">
+                    <label for="default_currency">Default currency</label>
+                    <select id="default_currency" name="default_currency"
+                            class="form-select" required>
+                        {% for code in currencies %}
+                        <option value="{{ code }}"
+                                {% if (default_currency or 'INR') == code %}selected{% endif %}>
+                            {{ code }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" x-data="{ show: false }">
                     <label for="password">Password</label>
                     <div class="input-group">
-                        <input x-model="pass"
-                               :type="show ? 'text' : 'password'"
+                        <input :type="show ? 'text' : 'password'"
                                id="password" name="password"
                                class="form-input"
-                               placeholder="Min. 8 chars, uppercase, digit & special"
+                               placeholder="Min. 8 characters"
                                required>
                         <button type="button" class="input-eye"
                                 @click="show = !show"
@@ -68,42 +75,20 @@
                             <svg x-show="show" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
                         </button>
                     </div>
-
-                    <!-- Password strength bar -->
-                    <div class="strength-wrap" x-show="pass.length > 0" x-transition>
-                        <div class="strength-track">
-                            <div class="strength-fill"
-                                 :style="`width: ${score * 25}%; background: ${colors[score]}`">
-                            </div>
-                        </div>
-                        <span class="strength-label"
-                              :style="`color: ${colors[score]}`"
-                              x-text="labels[score]">
-                        </span>
-                    </div>
-
-                    <!-- Checklist hints -->
-                    <ul class="pwd-hints" x-show="pass.length > 0" x-transition>
-                        <li :class="pass.length >= 8 ? 'hint-ok' : 'hint-no'">
-                            <i :data-lucide="pass.length >= 8 ? 'check' : 'x'" class="icon-hint"></i>
-                            At least 8 characters
-                        </li>
-                        <li :class="/[A-Z]/.test(pass) ? 'hint-ok' : 'hint-no'">
-                            <i :data-lucide="/[A-Z]/.test(pass) ? 'check' : 'x'" class="icon-hint"></i>
-                            One uppercase letter
-                        </li>
-                        <li :class="/[0-9]/.test(pass) ? 'hint-ok' : 'hint-no'">
-                            <i :data-lucide="/[0-9]/.test(pass) ? 'check' : 'x'" class="icon-hint"></i>
-                            One number
-                        </li>
-                        <li :class="/[@$!%*#?&]/.test(pass) ? 'hint-ok' : 'hint-no'">
-                            <i :data-lucide="/[@$!%*#?&]/.test(pass) ? 'check' : 'x'" class="icon-hint"></i>
-                            One special character (@$!%*#?&)
-                        </li>
-                    </ul>
+                    <p class="form-hint">At least 8 characters</p>
                 </div>
 
-                <button type="submit" class="btn-submit" :disabled="loading">
+                <div class="form-checkbox">
+                    <input type="checkbox" id="accept_terms" name="accept_terms" value="on"
+                           x-model="accepted" required
+                           {% if accepted %}checked{% endif %}>
+                    <label for="accept_terms" class="form-checkbox-label">
+                        I agree to the <a href="{{ url_for('terms') }}">Terms of Service</a>
+                        and <a href="{{ url_for('privacy') }}">Privacy Policy</a>.
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-submit" :disabled="loading || !accepted">
                     <span x-show="!loading">Create account</span>
                     <span x-show="loading" class="btn-loading">
                         <i data-lucide="loader-circle" class="icon-spin"></i>

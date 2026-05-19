@@ -523,56 +523,62 @@ a { color: inherit; text-decoration: none; }
 .input-eye:hover { color: var(--ink); }
 
 /* ------------------------------------------------------------------ */
-/* Password strength                                                   */
+/* Form select / checkbox / hint                                       */
 /* ------------------------------------------------------------------ */
 
-.strength-wrap {
+.form-select {
+    width: 100%;
+    padding: 0.6rem 2.25rem 0.6rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--ink);
+    background-color: var(--paper-card);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    appearance: none;
+    transition: border-color 0.15s ease;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.form-hint {
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    margin-top: 0.4rem;
+}
+
+.form-checkbox {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
+    align-items: flex-start;
+    gap: 0.625rem;
+    margin: 0.75rem 0 1.25rem;
 }
 
-.strength-track {
-    flex: 1;
-    height: 4px;
-    background: var(--border-soft);
-    border-radius: 999px;
-    overflow: hidden;
+.form-checkbox input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
 }
 
-.strength-fill {
-    height: 100%;
-    border-radius: 999px;
-    transition: width 0.3s ease, background 0.3s ease;
+.form-checkbox-label {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.45;
+    margin: 0;
 }
 
-.strength-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    min-width: 36px;
-    text-align: right;
+.form-checkbox-label a {
+    color: var(--accent);
+    text-decoration: underline;
 }
-
-.pwd-hints {
-    list-style: none;
-    margin-top: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.pwd-hints li {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.78rem;
-    font-weight: 500;
-    transition: color 0.2s;
-}
-
-.hint-ok { color: #27ae60; }
-.hint-no { color: var(--ink-faint); }
 
 /* ------------------------------------------------------------------ */
 /* Auth page header icon                                               */

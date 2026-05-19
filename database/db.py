@@ -62,6 +62,13 @@ class User(UserMixin, db.Model):
         String(255), unique=True, nullable=False, index=True
     )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    display_name: Mapped[str] = mapped_column(String(60), nullable=False)
+    default_currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, server_default="INR"
+    )
+    terms_accepted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
@@ -144,20 +151,74 @@ def seed_db(app: Flask) -> None:
         if existing is not None:
             return
 
-        demo = User(name="Demo User", email="demo@spendly.dev")
+        demo = User(
+            name="Demo User",
+            display_name="Demo",
+            email="demo@spendly.dev",
+            default_currency="INR",
+            terms_accepted_at=_utcnow(),
+        )
         demo.set_password("Demo@1234")
         db.session.add(demo)
         db.session.flush()
 
         sample: list[Expense] = [
-            Expense(user_id=demo.id, title="Electricity bill", amount=Decimal("2200.00"), category="Bills",         date=date(2026, 5,  1)),
-            Expense(user_id=demo.id, title="Groceries",        amount=Decimal("1850.50"), category="Food",          date=date(2026, 5,  3)),
-            Expense(user_id=demo.id, title="Metro pass",       amount=Decimal("500.00"),  category="Transport",     date=date(2026, 5,  5)),
-            Expense(user_id=demo.id, title="Doctor visit",     amount=Decimal("700.00"),  category="Health",        date=date(2026, 5,  8)),
-            Expense(user_id=demo.id, title="Netflix",          amount=Decimal("649.00"),  category="Entertainment", date=date(2026, 5, 10)),
-            Expense(user_id=demo.id, title="Python books",     amount=Decimal("850.00"),  category="Education",     date=date(2026, 5, 12)),
-            Expense(user_id=demo.id, title="Shirt",            amount=Decimal("1200.00"), category="Shopping",      date=date(2026, 5, 14)),
-            Expense(user_id=demo.id, title="Water bill",       amount=Decimal("350.00"),  category="Bills",         date=date(2026, 5, 15)),
+            Expense(
+                user_id=demo.id,
+                title="Electricity bill",
+                amount=Decimal("2200.00"),
+                category="Bills",
+                date=date(2026, 5, 1),
+            ),
+            Expense(
+                user_id=demo.id,
+                title="Groceries",
+                amount=Decimal("1850.50"),
+                category="Food",
+                date=date(2026, 5, 3),
+            ),
+            Expense(
+                user_id=demo.id,
+                title="Metro pass",
+                amount=Decimal("500.00"),
+                category="Transport",
+                date=date(2026, 5, 5),
+            ),
+            Expense(
+                user_id=demo.id,
+                title="Doctor visit",
+                amount=Decimal("700.00"),
+                category="Health",
+                date=date(2026, 5, 8),
+            ),
+            Expense(
+                user_id=demo.id,
+                title="Netflix",
+                amount=Decimal("649.00"),
+                category="Entertainment",
+                date=date(2026, 5, 10),
+            ),
+            Expense(
+                user_id=demo.id,
+                title="Python books",
+                amount=Decimal("850.00"),
+                category="Education",
+                date=date(2026, 5, 12),
+            ),
+            Expense(
+                user_id=demo.id,
+                title="Shirt",
+                amount=Decimal("1200.00"),
+                category="Shopping",
+                date=date(2026, 5, 14),
+            ),
+            Expense(
+                user_id=demo.id,
+                title="Water bill",
+                amount=Decimal("350.00"),
+                category="Bills",
+                date=date(2026, 5, 15),
+            ),
         ]
         db.session.add_all(sample)
         db.session.commit()
