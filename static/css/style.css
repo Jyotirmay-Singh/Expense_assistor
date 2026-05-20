@@ -143,6 +143,19 @@ a { color: inherit; text-decoration: none; }
     gap: 0.35rem;
 }
 
+.nav-form {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+}
+
+.nav-cta--button {
+    border: none !important;
+    background: var(--ink) !important;
+    font: inherit !important;
+    cursor: pointer;
+}
+
 /* ------------------------------------------------------------------ */
 /* Main                                                                */
 /* ------------------------------------------------------------------ */

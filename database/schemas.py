@@ -78,6 +78,7 @@ class RegisterSchema(BaseModel):
 class LoginSchema(BaseModel):
     email: str
     password: str
+    remember_me: bool = False
 
     @field_validator("email")
     @classmethod
@@ -92,6 +93,13 @@ class LoginSchema(BaseModel):
     def validate_password(cls, v: str) -> str:
         if not v.strip():
             raise ValueError("Password is required.")
+        return v
+
+    @field_validator("remember_me")
+    @classmethod
+    def validate_remember_me(cls, v: bool) -> bool:
+        if not isinstance(v, bool):
+            raise ValueError("Invalid remember-me value.")
         return v
 
 
