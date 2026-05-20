@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from flask import Flask, current_app, flash, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
@@ -29,6 +29,11 @@ def create_app() -> Flask:
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
         WTF_CSRF_TIME_LIMIT=3600,
+        REMEMBER_COOKIE_DURATION=timedelta(days=30),
+        REMEMBER_COOKIE_HTTPONLY=True,
+        REMEMBER_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
     )
 
     db.init_app(app)
@@ -114,6 +119,8 @@ def _register_auth_routes(app: Flask) -> None:
                 db.session.commit()
 
                 login_user(user, remember=False)
+                user.last_login_at = datetime.now(timezone.utc)
+                db.session.commit()
                 flash(f"Welcome to Spendly, {user.display_name}!", "success")
                 return redirect(url_for("dashboard"))
 
@@ -145,14 +152,19 @@ def _register_auth_routes(app: Flask) -> None:
         if request.method == "POST":
             raw_email = request.form.get("email", "")
             raw_pass = request.form.get("password", "")
+            remember_me = request.form.get("remember_me") == "on"
 
             # --- Pydantic validation ---
             try:
-                data = LoginSchema(email=raw_email, password=raw_pass)
+                data = LoginSchema(
+                    email=raw_email, password=raw_pass, remember_me=remember_me
+                )
             except ValidationError:
                 # Generic message — don't reveal whether the email exists
                 flash("Invalid email or password.", "error")
-                return render_template("login.html", email=raw_email)
+                return render_template(
+                    "login.html", email=raw_email, remember_me=remember_me
+                )
 
             # --- DB operations ---
             try:
@@ -162,9 +174,13 @@ def _register_auth_routes(app: Flask) -> None:
 
                 if user is None or not user.check_password(data.password):
                     flash("Invalid email or password.", "error")
-                    return render_template("login.html", email=raw_email)
+                    return render_template(
+                        "login.html", email=raw_email, remember_me=remember_me
+                    )
 
-                login_user(user, remember=False)
+                login_user(user, remember=data.remember_me)
+                user.last_login_at = datetime.now(timezone.utc)
+                db.session.commit()
                 flash(f"Welcome back, {user.name}!", "success")
 
                 # Safe open-redirect guard
@@ -177,15 +193,17 @@ def _register_auth_routes(app: Flask) -> None:
                 db.session.rollback()
                 current_app.logger.error("DB error during login: %s", exc)
                 flash("A database error occurred. Please try again.", "error")
-                return render_template("login.html", email=raw_email)
+                return render_template(
+                    "login.html", email=raw_email, remember_me=remember_me
+                )
             except Exception as exc:
                 current_app.logger.error("Unexpected login error: %s", exc)
                 flash("An unexpected error occurred. Please try again.", "error")
-                return render_template("login.html")
+                return render_template("login.html", remember_me=remember_me)
 
         return render_template("login.html")
 
-    @app.route("/logout")
+    @app.route("/logout", methods=["POST"])
     @login_required
     def logout() -> ResponseReturnValue:
         try:

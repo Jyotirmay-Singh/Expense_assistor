@@ -72,6 +72,9 @@ class User(UserMixin, db.Model):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     expenses: Mapped[list["Expense"]] = relationship(
         back_populates="user",
