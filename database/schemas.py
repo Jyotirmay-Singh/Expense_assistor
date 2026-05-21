@@ -1,5 +1,5 @@
 from email_validator import EmailNotValidError, validate_email
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
 
 ALLOWED_CURRENCIES: tuple[str, ...] = (
@@ -106,3 +106,52 @@ class LoginSchema(BaseModel):
 def extract_messages(exc: ValidationError) -> list[str]:
     """Return clean user-facing messages from a Pydantic v2 ValidationError."""
     return [err["msg"].removeprefix("Value error, ") for err in exc.errors()]
+
+
+class ProfileUpdateSchema(BaseModel):
+    display_name: str
+    default_currency: str
+
+    @field_validator("display_name")
+    @classmethod
+    def validate_display_name(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 2:
+            raise ValueError("Display name must be at least 2 characters.")
+        if len(v) > 60:
+            raise ValueError("Display name must not exceed 60 characters.")
+        return v
+
+    @field_validator("default_currency")
+    @classmethod
+    def validate_default_currency(cls, v: str) -> str:
+        v = v.strip().upper()
+        if v not in ALLOWED_CURRENCIES:
+            raise ValueError("Please choose a supported currency.")
+        return v
+
+
+class ChangePasswordSchema(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+    @field_validator("current_password")
+    @classmethod
+    def validate_current_password(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Current password is required.")
+        return v
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        if not (8 <= len(v) <= 72):
+            raise ValueError("New password must be 8–72 characters.")
+        return v
+
+    @model_validator(mode="after")
+    def passwords_match(self) -> "ChangePasswordSchema":
+        if self.new_password != self.confirm_password:
+            raise ValueError("New password and confirmation do not match.")
+        return self

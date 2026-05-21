@@ -11,10 +11,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.db import User, csrf, db, login_manager, migrate, seed_db
 from database.schemas import (
     ALLOWED_CURRENCIES,
+    ChangePasswordSchema,
     LoginSchema,
+    ProfileUpdateSchema,
     RegisterSchema,
     extract_messages,
 )
+from database.services import change_password, update_profile
 
 
 def create_app() -> Flask:
@@ -40,6 +43,10 @@ def create_app() -> Flask:
     migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)
+
+    @app.template_filter("strftime")
+    def _strftime_filter(value: datetime | None, fmt: str = "%B %d, %Y") -> str:
+        return value.strftime(fmt) if value else ""
 
     _register_auth_routes(app)
     _register_main_routes(app)
@@ -232,10 +239,77 @@ def _register_main_routes(app: Flask) -> None:
     def dashboard() -> ResponseReturnValue:
         return f"Dashboard — welcome, {current_user.name} (coming in Step 5)"
 
-    @app.route("/profile")
+    @app.route("/profile", methods=["GET"])
     @login_required
     def profile() -> ResponseReturnValue:
-        return "Profile page — coming in Step 4"
+        return render_template(
+            "profile.html",
+            user=current_user,
+            currencies=ALLOWED_CURRENCIES,
+        )
+
+    @app.route("/profile", methods=["POST"])
+    @login_required
+    def profile_update() -> ResponseReturnValue:
+        raw_display_name = request.form.get("display_name", "")
+        raw_currency = request.form.get("default_currency", "")
+
+        try:
+            data = ProfileUpdateSchema(
+                display_name=raw_display_name,
+                default_currency=raw_currency,
+            )
+        except ValidationError as exc:
+            for msg in extract_messages(exc):
+                flash(msg, "error")
+            return redirect(url_for("profile"))
+
+        try:
+            update_profile(current_user, data)
+            flash("Profile updated.", "success")
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error during profile update: %s", exc)
+            flash("A database error occurred. Please try again.", "error")
+        except Exception as exc:  # noqa: BLE001
+            current_app.logger.error("Unexpected profile update error: %s", exc)
+            flash("An unexpected error occurred. Please try again.", "error")
+
+        return redirect(url_for("profile"))
+
+    @app.route("/profile/change-password", methods=["POST"])
+    @login_required
+    def change_password_route() -> ResponseReturnValue:
+        raw_current = request.form.get("current_password", "")
+        raw_new = request.form.get("new_password", "")
+        raw_confirm = request.form.get("confirm_password", "")
+
+        try:
+            data = ChangePasswordSchema(
+                current_password=raw_current,
+                new_password=raw_new,
+                confirm_password=raw_confirm,
+            )
+        except ValidationError as exc:
+            for msg in extract_messages(exc):
+                flash(msg, "error")
+            return redirect(url_for("profile"))
+
+        try:
+            ok = change_password(current_user, data)
+            if not ok:
+                flash("Current password is incorrect.", "error")
+            else:
+                flash("Password updated.", "success")
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error during password change: %s", exc)
+            flash("A database error occurred. Please try again.", "error")
+        except Exception as exc:  # noqa: BLE001
+            current_app.logger.error("Unexpected password change error: %s", exc)
+            flash("An unexpected error occurred. Please try again.", "error")
+
+        return redirect(url_for("profile"))
 
     @app.route("/expenses/add")
     @login_required

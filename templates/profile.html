@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block content %}
+{% set parts = (user.display_name or user.name or '?').split() %}
+{% set initials = (parts[0][:1] + (parts[1][:1] if parts|length > 1 else '')) | upper %}
+
+<section class="profile-section">
+    <div class="profile-container" data-aos="fade-up" data-aos-duration="600">
+        <div class="profile-grid">
+
+            <aside class="profile-rail">
+
+                <header class="profile-header">
+                    <div class="avatar-circle">
+                        <span class="avatar-initials">{{ initials }}</span>
+                    </div>
+                    <h1 class="profile-name">{{ user.display_name }}</h1>
+                    <p class="profile-email">{{ user.email }}</p>
+                </header>
+
+                <article class="profile-card" data-aos="fade-up" data-aos-delay="50">
+                    <h2 class="profile-card-title">
+                        <i data-lucide="id-card" class="icon-sm"></i>
+                        Account details
+                    </h2>
+                    <dl class="info-grid">
+                        <dt>Full name</dt>
+                        <dd>{{ user.name }}</dd>
+
+                        <dt>Email</dt>
+                        <dd>{{ user.email }}</dd>
+
+                        <dt>Member since</dt>
+                        <dd>{{ user.created_at | strftime('%B %d, %Y') }}</dd>
+
+                        <dt>Last sign-in</dt>
+                        <dd>
+                            {% if user.last_login_at %}
+                                {{ user.last_login_at | strftime('%B %d, %Y at %I:%M %p UTC') }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </article>
+
+            </aside>
+
+            <div class="profile-main">
+
+                <article class="profile-card" data-aos="fade-up" data-aos-delay="100">
+                    <h2 class="profile-card-title">
+                        <i data-lucide="user-pen" class="icon-sm"></i>
+                        Edit profile
+                    </h2>
+                    <form method="POST" action="{{ url_for('profile_update') }}" novalidate
+                          x-data="{ loading: false }" @submit="loading = true">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="form-group">
+                            <label for="display_name">Display name</label>
+                            <input type="text" id="display_name" name="display_name"
+                                   class="form-input"
+                                   value="{{ user.display_name }}"
+                                   maxlength="60" required autocomplete="nickname">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="default_currency">Default currency</label>
+                            <select id="default_currency" name="default_currency"
+                                    class="form-select" required>
+                                {% for code in currencies %}
+                                <option value="{{ code }}"
+                                        {% if user.default_currency == code %}selected{% endif %}>
+                                    {{ code }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn-submit" :disabled="loading">
+                            <span x-show="!loading">Save changes</span>
+                            <span x-show="loading" class="btn-loading">
+                                <i data-lucide="loader-circle" class="icon-spin"></i>
+                                Saving…
+                            </span>
+                        </button>
+                    </form>
+                </article>
+
+                <article class="profile-card" data-aos="fade-up" data-aos-delay="150"
+                         x-data="{ current: '', next: '', confirm: '',
+                                   get mismatch() { return this.confirm.length > 0 && this.next !== this.confirm; } }">
+                    <h2 class="profile-card-title">
+                        <i data-lucide="lock" class="icon-sm"></i>
+                        Change password
+                    </h2>
+                    <form method="POST" action="{{ url_for('change_password_route') }}" novalidate
+                          x-data="{ loading: false }"
+                          @submit="if ($root.mismatch) { $event.preventDefault(); } else { loading = true; }">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="form-group" x-data="{ show: false }">
+                            <label for="current_password">Current password</label>
+                            <div class="input-group">
+                                <input :type="show ? 'text' : 'password'"
+                                       id="current_password" name="current_password"
+                                       class="form-input"
+                                       x-model="$root.current"
+                                       required autocomplete="current-password">
+                                {% include "partials/_password_eye.html" %}
+                            </div>
+                        </div>
+
+                        <div class="form-group" x-data="{ show: false }">
+                            <label for="new_password">New password</label>
+                            <div class="input-group">
+                                <input :type="show ? 'text' : 'password'"
+                                       id="new_password" name="new_password"
+                                       class="form-input"
+                                       placeholder="Min. 8 characters"
+                                       x-model="$root.next"
+                                       minlength="8" maxlength="72"
+                                       required autocomplete="new-password">
+                                {% include "partials/_password_eye.html" %}
+                            </div>
+                            <p class="form-hint">At least 8 characters</p>
+                        </div>
+
+                        <div class="form-group" x-data="{ show: false }">
+                            <label for="confirm_password">Confirm new password</label>
+                            <div class="input-group">
+                                <input :type="show ? 'text' : 'password'"
+                                       id="confirm_password" name="confirm_password"
+                                       class="form-input"
+                                       x-model="$root.confirm"
+                                       required autocomplete="new-password">
+                                {% include "partials/_password_eye.html" %}
+                            </div>
+                            <p class="password-mismatch" x-show="$root.mismatch" x-cloak>
+                                Passwords do not match.
+                            </p>
+                        </div>
+
+                        <button type="submit" class="btn-submit"
+                                :disabled="loading || $root.mismatch">
+                            <span x-show="!loading">Update password</span>
+                            <span x-show="loading" class="btn-loading">
+                                <i data-lucide="loader-circle" class="icon-spin"></i>
+                                Updating…
+                            </span>
+                        </button>
+                    </form>
+                </article>
+
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}
