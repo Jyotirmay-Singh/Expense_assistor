@@ -1,3 +1,5 @@
+from typing import Literal
+
 from email_validator import EmailNotValidError, validate_email
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
@@ -155,3 +157,23 @@ class ChangePasswordSchema(BaseModel):
         if self.new_password != self.confirm_password:
             raise ValueError("New password and confirmation do not match.")
         return self
+
+
+# ------------------------------------------------------------------ #
+# Dashboard period schema                                              #
+# ------------------------------------------------------------------ #
+
+DASHBOARD_PERIODS: tuple[str, ...] = ("this_month", "last_month", "all_time")
+
+
+class DashboardPeriodSchema(BaseModel):
+    period: Literal["this_month", "last_month", "all_time"] = "this_month"
+
+
+def coerce_period(raw: str | None) -> DashboardPeriodSchema:
+    if not raw:
+        return DashboardPeriodSchema()
+    try:
+        return DashboardPeriodSchema(period=raw)  # type: ignore[arg-type]
+    except ValidationError:
+        return DashboardPeriodSchema()

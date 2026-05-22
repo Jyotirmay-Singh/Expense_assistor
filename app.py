@@ -11,13 +11,20 @@ from sqlalchemy.exc import SQLAlchemyError
 from database.db import User, csrf, db, login_manager, migrate, seed_db
 from database.schemas import (
     ALLOWED_CURRENCIES,
+    DASHBOARD_PERIODS,
     ChangePasswordSchema,
     LoginSchema,
     ProfileUpdateSchema,
     RegisterSchema,
+    coerce_period,
     extract_messages,
 )
-from database.services import change_password, update_profile
+from database.services import (
+    change_password,
+    compute_dashboard,
+    empty_dashboard_payload,
+    update_profile,
+)
 
 
 def create_app() -> Flask:
@@ -237,7 +244,21 @@ def _register_main_routes(app: Flask) -> None:
     @app.route("/dashboard")
     @login_required
     def dashboard() -> ResponseReturnValue:
-        return f"Dashboard — welcome, {current_user.name} (coming in Step 5)"
+        period = coerce_period(request.args.get("period")).period
+        try:
+            payload = compute_dashboard(current_user, period)
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error on /dashboard: %s", exc)
+            flash("A database error occurred loading your dashboard.", "error")
+            payload = empty_dashboard_payload(current_user, period)
+        return render_template(
+            "dashboard.html",
+            user=current_user,
+            period=period,
+            periods=DASHBOARD_PERIODS,
+            **payload,
+        )
 
     @app.route("/profile", methods=["GET"])
     @login_required

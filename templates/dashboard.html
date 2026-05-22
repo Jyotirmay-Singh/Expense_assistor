@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Spendly{% endblock %}
+
+{% block content %}
+<section class="dashboard-section">
+    <div class="dashboard-container" data-aos="fade-up" data-aos-duration="600">
+
+        <header class="dashboard-header">
+            <h1 class="dashboard-heading">
+                <i data-lucide="layout-dashboard" class="icon-sm"></i>
+                Dashboard
+            </h1>
+            <nav class="dashboard-periods" aria-label="Time period">
+                {% for p in periods %}
+                <a href="{{ url_for('dashboard', period=p) }}"
+                   class="dashboard-period-link{% if p == period %} is-active{% endif %}">
+                    {{ p.replace('_', ' ').title() }}
+                </a>
+                {% endfor %}
+            </nav>
+        </header>
+
+        {% if period_start and period_end %}
+        <p class="dashboard-range">
+            {{ period_start.strftime('%d %b %Y') }} — {{ period_end.strftime('%d %b %Y') }}
+        </p>
+        {% endif %}
+
+        <!-- Summary tiles -->
+        <div class="dashboard-tiles" data-aos="fade-up" data-aos-delay="50">
+            <div class="dashboard-tile">
+                <span class="tile-label">
+                    <i data-lucide="indian-rupee" class="icon-hint"></i>
+                    Total spent
+                </span>
+                <span class="tile-value">{{ "{:,.2f}".format(total_amount) }}</span>
+                <span class="tile-currency">{{ currency }}</span>
+            </div>
+            <div class="dashboard-tile">
+                <span class="tile-label">
+                    <i data-lucide="receipt" class="icon-hint"></i>
+                    Expenses
+                </span>
+                <span class="tile-value">{{ expense_count }}</span>
+            </div>
+            <div class="dashboard-tile">
+                <span class="tile-label">
+                    <i data-lucide="trending-up" class="icon-hint"></i>
+                    Average
+                </span>
+                <span class="tile-value">{{ "{:,.2f}".format(average_amount) }}</span>
+                <span class="tile-currency">{{ currency }}</span>
+            </div>
+        </div>
+
+        <!-- Category breakdown -->
+        <article class="profile-card" data-aos="fade-up" data-aos-delay="100">
+            <h2 class="profile-card-title">
+                <i data-lucide="pie-chart" class="icon-sm"></i>
+                By category
+            </h2>
+            {% if category_breakdown %}
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Total ({{ currency }})</th>
+                        <th>Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in category_breakdown %}
+                    <tr>
+                        <td>{{ row.category }}</td>
+                        <td>{{ "{:,.2f}".format(row.total) }}</td>
+                        <td>{{ "{:.2f}".format(row.percent) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="dashboard-empty">No spending in this period.</p>
+            {% endif %}
+        </article>
+
+        <!-- Recent expenses -->
+        <article class="profile-card" data-aos="fade-up" data-aos-delay="150">
+            <h2 class="profile-card-title">
+                <i data-lucide="clock" class="icon-sm"></i>
+                Recent expenses
+            </h2>
+            {% if recent_expenses %}
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Amount ({{ currency }})</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in recent_expenses %}
+                    <tr>
+                        <td>{{ expense.date.strftime('%d %b %Y') }}</td>
+                        <td>{{ expense.title }}</td>
+                        <td>{{ expense.category }}</td>
+                        <td>{{ "{:,.2f}".format(expense.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="dashboard-empty">No expenses yet.</p>
+            {% endif %}
+        </article>
+
+        <!-- Daily series -->
+        <article class="profile-card" data-aos="fade-up" data-aos-delay="200">
+            <h2 class="profile-card-title">
+                <i data-lucide="bar-chart-3" class="icon-sm"></i>
+                Daily activity
+            </h2>
+            {% if daily_series %}
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Total ({{ currency }})</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in daily_series %}
+                    <tr>
+                        <td>{{ row.date.strftime('%d %b %Y') }}</td>
+                        <td>{{ "{:,.2f}".format(row.total) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="dashboard-empty">No daily activity in this period.</p>
+            {% endif %}
+        </article>
+
+    </div>
+</section>
+{% endblock %}
