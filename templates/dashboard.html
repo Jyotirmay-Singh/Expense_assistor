@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Spendly{% endblock %}
+
+{% block head %}
+{# Chart.js — loaded eagerly (no defer) so it's defined before the init script runs #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+{# ── Category → colour mapping (matches Chart.js palette below) ── #}
+{% set cat_color = {
+    "Bills":         "#1a472a",
+    "Food":          "#c17f24",
+    "Transport":     "#5b7fa6",
+    "Health":        "#8b5e83",
+    "Entertainment": "#e67e22",
+    "Shopping":      "#2980b9",
+    "Education":     "#27ae60",
+    "Other":         "#6b6b6b"
+} %}
+
+<section class="db-section">
+<div class="db-container">
+
+  {# ── Page header ─────────────────────────────────────────────────── #}
+  <header class="db-header" data-aos="fade-up" data-aos-duration="500">
+    <div class="db-header-left">
+      <h1 class="db-greeting">Hello, {{ user.display_name.split()[0] }}</h1>
+      <p class="db-subheading">
+        {% if period_start and period_end %}
+          {{ period_start.strftime('%d %b') }} — {{ period_end.strftime('%d %b %Y') }}
+        {% else %}
+          All time
+        {% endif %}
+        &nbsp;·&nbsp;
+        {{ expense_count }} expense{{ 's' if expense_count != 1 else '' }}
+      </p>
+    </div>
+    <nav class="db-period-nav" aria-label="Period">
+      {% for p in periods %}
+      <a href="{{ url_for('dashboard', period=p) }}"
+         class="db-period-btn{% if p == period %} is-active{% endif %}">
+        {{ p.replace('_', ' ').title() }}
+      </a>
+      {% endfor %}
+    </nav>
+  </header>
+
+  {# ── KPI cards ────────────────────────────────────────────────────── #}
+  <div class="db-kpi-grid" data-aos="fade-up" data-aos-delay="60" data-aos-duration="500">
+
+    <div class="db-kpi-card">
+      <div class="db-kpi-icon" style="background:var(--accent-light);">
+        <i data-lucide="credit-card" style="color:var(--accent);width:20px;height:20px;"></i>
+      </div>
+      <p class="db-kpi-label">Total spent</p>
+      <p class="db-kpi-value">{{ "{:,.2f}".format(total_amount) }}</p>
+      <p class="db-kpi-currency">{{ currency }}</p>
+    </div>
+
+    <div class="db-kpi-card">
+      <div class="db-kpi-icon" style="background:#e8f0eb;">
+        <i data-lucide="receipt" style="color:#2e7d32;width:20px;height:20px;"></i>
+      </div>
+      <p class="db-kpi-label">Transactions</p>
+      <p class="db-kpi-value">{{ expense_count }}</p>
+      <p class="db-kpi-currency">expense{{ 's' if expense_count != 1 else '' }}</p>
+    </div>
+
+    <div class="db-kpi-card">
+      <div class="db-kpi-icon" style="background:var(--accent-2-light);">
+        <i data-lucide="trending-up" style="color:var(--accent-2);width:20px;height:20px;"></i>
+      </div>
+      <p class="db-kpi-label">Avg per expense</p>
+      <p class="db-kpi-value">{{ "{:,.2f}".format(average_amount) }}</p>
+      <p class="db-kpi-currency">{{ currency }}</p>
+    </div>
+
+  </div>
+
+  {# ── Charts ───────────────────────────────────────────────────────── #}
+  <div class="db-charts-grid" data-aos="fade-up" data-aos-delay="120" data-aos-duration="500">
+
+    {# Category donut #}
+    <div class="db-card db-chart-card">
+      <h2 class="db-card-title">
+        <i data-lucide="pie-chart"></i>
+        By category
+      </h2>
+      {% if category_breakdown %}
+      <div class="db-donut-wrap">
+        <div class="db-donut-canvas-wrap">
+          <canvas id="donutChart"></canvas>
+        </div>
+        <ul class="db-donut-legend">
+          {% for row in category_breakdown %}
+          <li class="db-legend-row">
+            <span class="db-legend-dot"
+                  style="background:{{ cat_color.get(row.category, '#6b6b6b') }};"></span>
+            <span class="db-legend-cat">{{ row.category }}</span>
+            <span class="db-legend-amt">{{ "{:,.0f}".format(row.total) }}</span>
+            <span class="db-legend-pct">{{ "{:.0f}".format(row.percent) }}%</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% else %}
+      <p class="db-empty">No spending in this period.</p>
+      {% endif %}
+    </div>
+
+    {# Daily spend trend #}
+    <div class="db-card db-chart-card">
+      <h2 class="db-card-title">
+        <i data-lucide="bar-chart-3"></i>
+        Daily spend
+      </h2>
+      {% if daily_series %}
+      <div class="db-line-canvas-wrap">
+        <canvas id="trendChart"></canvas>
+      </div>
+      {% else %}
+      <p class="db-empty">No daily activity in this period.</p>
+      {% endif %}
+    </div>
+
+  </div>
+
+  {# ── Category breakdown ───────────────────────────────────────────── #}
+  <div class="db-card" data-aos="fade-up" data-aos-delay="180" data-aos-duration="500">
+    <h2 class="db-card-title">
+      <i data-lucide="layers"></i>
+      Breakdown
+    </h2>
+    {% if category_breakdown %}
+    <div class="db-breakdown-list">
+      {% for row in category_breakdown %}
+      <div class="db-breakdown-row">
+        <div class="db-breakdown-left">
+          <span class="db-cat-badge"
+                style="background:{{ cat_color.get(row.category, '#6b6b6b') }}1a;
+                       color:{{ cat_color.get(row.category, '#6b6b6b') }};">
+            {{ row.category }}
+          </span>
+        </div>
+        <div class="db-bar-track">
+          <div class="db-bar-fill"
+               style="width:{{ row.percent }}%;
+                      background:{{ cat_color.get(row.category, '#6b6b6b') }};"></div>
+        </div>
+        <div class="db-breakdown-right">
+          <span class="db-breakdown-amt">{{ "{:,.2f}".format(row.total) }}</span>
+          <span class="db-breakdown-pct">{{ "{:.1f}".format(row.percent) }}%</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="db-empty">No spending in this period.</p>
+    {% endif %}
+  </div>
+
+  {# ── Recent expenses ──────────────────────────────────────────────── #}
+  <div class="db-card" data-aos="fade-up" data-aos-delay="240" data-aos-duration="500">
+    <div class="db-card-header-row">
+      <h2 class="db-card-title">
+        <i data-lucide="clock"></i>
+        Recent expenses
+      </h2>
+      <a href="{{ url_for('add_expense') }}" class="db-add-btn">
+        <i data-lucide="plus"></i>
+        Add expense
+      </a>
+    </div>
+
+    {% if recent_expenses %}
+    <div class="db-table-wrap">
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th class="db-th-num">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for exp in recent_expenses %}
+          <tr class="db-tr">
+            <td class="db-td-date">{{ exp.date.strftime('%d %b %Y') }}</td>
+            <td class="db-td-title">{{ exp.title }}</td>
+            <td>
+              <span class="db-cat-badge"
+                    style="background:{{ cat_color.get(exp.category, '#6b6b6b') }}1a;
+                           color:{{ cat_color.get(exp.category, '#6b6b6b') }};">
+                {{ exp.category }}
+              </span>
+            </td>
+            <td class="db-td-amt">
+              {{ "{:,.2f}".format(exp.amount) }}
+              <span class="db-td-ccy">{{ currency }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="db-empty">
+      No expenses yet.
+      <a href="{{ url_for('add_expense') }}" style="color:var(--accent);">Add your first one →</a>
+    </p>
+    {% endif %}
+  </div>
+
+</div>
+</section>
+
+{% endblock %}
+
+{# ── Chart.js init ────────────────────────────────────────────────────── #}
+{% block scripts %}
+{% if category_breakdown or daily_series %}
+<script>
+(function () {
+  const CAT_COLORS = {
+    Bills:         '#1a472a',
+    Food:          '#c17f24',
+    Transport:     '#5b7fa6',
+    Health:        '#8b5e83',
+    Entertainment: '#e67e22',
+    Shopping:      '#2980b9',
+    Education:     '#27ae60',
+    Other:         '#6b6b6b',
+  };
+
+  Chart.defaults.font.family = "'DM Sans', system-ui, sans-serif";
+  Chart.defaults.color       = '#6b6b6b';
+  Chart.defaults.borderColor = '#e4e1da';
+
+  /* ── Category donut ─────────────────────────────────────────────── */
+  {% if category_breakdown %}
+  const donutEl = document.getElementById('donutChart');
+  if (donutEl) {
+    const dLabels = [{% for r in category_breakdown %}"{{ r.category }}"{% if not loop.last %},{% endif %}{% endfor %}];
+    const dData   = [{% for r in category_breakdown %}{{ r.total | float }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const dColors = dLabels.map(l => CAT_COLORS[l] || '#6b6b6b');
+
+    new Chart(donutEl, {
+      type: 'doughnut',
+      data: {
+        labels: dLabels,
+        datasets: [{
+          data:            dData,
+          backgroundColor: dColors,
+          borderColor:     '#ffffff',
+          borderWidth:     2,
+          hoverOffset:     6,
+        }],
+      },
+      options: {
+        responsive:          true,
+        maintainAspectRatio: true,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => ` ${c.label}: ₹${c.parsed.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+            },
+          },
+        },
+      },
+    });
+  }
+  {% endif %}
+
+  /* ── Daily spend trend line ─────────────────────────────────────── */
+  {% if daily_series %}
+  const trendEl = document.getElementById('trendChart');
+  if (trendEl) {
+    const tLabels = [{% for r in daily_series %}"{{ r.date.strftime('%d %b') }}"{% if not loop.last %},{% endif %}{% endfor %}];
+    const tData   = [{% for r in daily_series %}{{ r.total | float }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+    new Chart(trendEl, {
+      type: 'line',
+      data: {
+        labels: tLabels,
+        datasets: [{
+          label:                'Spend',
+          data:                 tData,
+          borderColor:          '#1a472a',
+          backgroundColor:      'rgba(26,71,42,0.08)',
+          borderWidth:          2,
+          pointRadius:          4,
+          pointBackgroundColor: '#1a472a',
+          pointHoverRadius:     6,
+          fill:                 true,
+          tension:              0.35,
+        }],
+      },
+      options: {
+        responsive:          true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => ` ₹${c.parsed.y.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid:  { display: false },
+            ticks: { font: { size: 11 } },
+          },
+          y: {
+            beginAtZero: true,
+            grid:  { color: '#e4e1da' },
+            ticks: {
+              font: { size: 11 },
+              callback: v => '₹' + v.toLocaleString('en-IN'),
+            },
+          },
+        },
+      },
+    });
+  }
+  {% endif %}
+
+}());
+</script>
+{% endif %}
+{% endblock %}
