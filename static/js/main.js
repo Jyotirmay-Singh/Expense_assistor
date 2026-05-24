@@ -11,6 +11,11 @@ document.addEventListener('alpine:initialized', () => {
     initLucide();
 });
 
+// Re-run Lucide after HTMX swaps a fragment in (e.g. profile activity results)
+document.body.addEventListener('htmx:afterSwap', () => {
+    initLucide();
+});
+
 // ------------------------------------------------------------------ //
 // AOS — scroll-triggered entrance animations                          //
 // ------------------------------------------------------------------ //

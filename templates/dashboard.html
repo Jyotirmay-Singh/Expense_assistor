@@ -9,18 +9,6 @@
 
 {% block content %}
 
-{# ── Category → colour mapping (matches Chart.js palette below) ── #}
-{% set cat_color = {
-    "Bills":         "#1a472a",
-    "Food":          "#c17f24",
-    "Transport":     "#5b7fa6",
-    "Health":        "#8b5e83",
-    "Entertainment": "#e67e22",
-    "Shopping":      "#2980b9",
-    "Education":     "#27ae60",
-    "Other":         "#6b6b6b"
-} %}
-
 <section class="db-section">
 <div class="db-container">
 
@@ -97,8 +85,7 @@
         <ul class="db-donut-legend">
           {% for row in category_breakdown %}
           <li class="db-legend-row">
-            <span class="db-legend-dot"
-                  style="background:{{ cat_color.get(row.category, '#6b6b6b') }};"></span>
+            <span class="db-legend-dot cat-{{ row.category|lower }}"></span>
             <span class="db-legend-cat">{{ row.category }}</span>
             <span class="db-legend-amt">{{ "{:,.0f}".format(row.total) }}</span>
             <span class="db-legend-pct">{{ "{:.0f}".format(row.percent) }}%</span>
@@ -139,16 +126,13 @@
       {% for row in category_breakdown %}
       <div class="db-breakdown-row">
         <div class="db-breakdown-left">
-          <span class="db-cat-badge"
-                style="background:{{ cat_color.get(row.category, '#6b6b6b') }}1a;
-                       color:{{ cat_color.get(row.category, '#6b6b6b') }};">
+          <span class="db-cat-badge cat-{{ row.category|lower }}">
             {{ row.category }}
           </span>
         </div>
         <div class="db-bar-track">
-          <div class="db-bar-fill"
-               style="width:{{ row.percent }}%;
-                      background:{{ cat_color.get(row.category, '#6b6b6b') }};"></div>
+          <div class="db-bar-fill cat-{{ row.category|lower }}"
+               style="width:{{ row.percent }}%;"></div>
         </div>
         <div class="db-breakdown-right">
           <span class="db-breakdown-amt">{{ "{:,.2f}".format(row.total) }}</span>
@@ -192,9 +176,7 @@
             <td class="db-td-date">{{ exp.date.strftime('%d %b %Y') }}</td>
             <td class="db-td-title">{{ exp.title }}</td>
             <td>
-              <span class="db-cat-badge"
-                    style="background:{{ cat_color.get(exp.category, '#6b6b6b') }}1a;
-                           color:{{ cat_color.get(exp.category, '#6b6b6b') }};">
+              <span class="db-cat-badge cat-{{ exp.category|lower }}">
                 {{ exp.category }}
               </span>
             </td>
@@ -225,15 +207,15 @@
 {% if category_breakdown or daily_series %}
 <script>
 (function () {
-  const CAT_COLORS = {
-    Bills:         '#1a472a',
-    Food:          '#c17f24',
-    Transport:     '#5b7fa6',
-    Health:        '#8b5e83',
-    Entertainment: '#e67e22',
-    Shopping:      '#2980b9',
-    Education:     '#27ae60',
-    Other:         '#6b6b6b',
+  const ROOT = getComputedStyle(document.documentElement);
+  const catColor = (name) =>
+    ROOT.getPropertyValue('--cat-' + name.toLowerCase().trim()).trim()
+    || ROOT.getPropertyValue('--cat-other').trim();
+  const hexToRgba = (hex, a) => {
+    const h = hex.replace('#', '');
+    const f = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+    const n = parseInt(f, 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
   };
 
   Chart.defaults.font.family = "'DM Sans', system-ui, sans-serif";
@@ -246,7 +228,7 @@
   if (donutEl) {
     const dLabels = [{% for r in category_breakdown %}"{{ r.category }}"{% if not loop.last %},{% endif %}{% endfor %}];
     const dData   = [{% for r in category_breakdown %}{{ r.total | float }}{% if not loop.last %},{% endif %}{% endfor %}];
-    const dColors = dLabels.map(l => CAT_COLORS[l] || '#6b6b6b');
+    const dColors = dLabels.map(catColor);
 
     new Chart(donutEl, {
       type: 'doughnut',
@@ -291,11 +273,11 @@
         datasets: [{
           label:                'Spend',
           data:                 tData,
-          borderColor:          '#1a472a',
-          backgroundColor:      'rgba(26,71,42,0.08)',
+          borderColor:          catColor('Bills'),
+          backgroundColor:      hexToRgba(catColor('Bills'), 0.08),
           borderWidth:          2,
           pointRadius:          4,
-          pointBackgroundColor: '#1a472a',
+          pointBackgroundColor: catColor('Bills'),
           pointHoverRadius:     6,
           fill:                 true,
           tension:              0.35,

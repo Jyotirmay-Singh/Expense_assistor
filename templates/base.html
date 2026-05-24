@@ -16,6 +16,24 @@
     <!-- Alpine.js (must be deferred, loaded before body content) -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 
+    <!-- Tailwind (Play CDN; Preflight OFF so it never resets the hand-written CSS) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        corePlugins: { preflight: false },
+        theme: { extend: {
+          colors: {
+            accent: 'var(--accent)', 'accent-light': 'var(--accent-light)',
+            ink: 'var(--ink)', 'ink-muted': 'var(--ink-muted)',
+            border: 'var(--border)', 'paper-card': 'var(--paper-card)',
+            danger: 'var(--danger)', 'danger-light': 'var(--danger-light)',
+          },
+          borderRadius: { card: 'var(--radius-lg)', input: 'var(--radius-sm)' },
+          fontFamily: { body: ['DM Sans', 'system-ui', 'sans-serif'] },
+        } },
+      };
+    </script>
+
     <!-- App styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block head %}{% endblock %}
@@ -81,6 +99,8 @@
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
     <!-- AOS -->
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    <!-- HTMX — server-driven partial swaps -->
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <!-- App JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
