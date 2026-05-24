@@ -7,7 +7,7 @@ from flask import current_app
 from sqlalchemy import func, select
 
 from database.db import Expense, User, db
-from database.schemas import ChangePasswordSchema, ProfileUpdateSchema
+from database.schemas import ChangePasswordSchema, DateRangeSchema, ProfileUpdateSchema
 
 
 def update_profile(user: User, data: ProfileUpdateSchema) -> None:
@@ -172,5 +172,51 @@ def compute_dashboard(user: User, period: str) -> dict[str, object]:
         category_breakdown=_category_breakdown(user.id, lo, hi, total),
         recent_expenses=_recent_expenses(user.id, lo, hi),
         daily_series=_daily_series(user.id, lo, hi),
+    )
+    return payload
+
+
+# ------------------------------------------------------------------ #
+# Profile activity (custom date range)                                 #
+# ------------------------------------------------------------------ #
+
+
+def list_expenses_in_range(
+    user_id: int, lo: date | None, hi: date | None
+) -> list[Expense]:
+    return list(
+        db.session.execute(
+            select(Expense)
+            .where(*_where_user_and_period(user_id, lo, hi))
+            .order_by(Expense.date.desc(), Expense.id.desc())
+        ).scalars()
+    )
+
+
+def empty_activity_payload(user: User, data: DateRangeSchema) -> dict[str, object]:
+    return {
+        "activity_expenses": [],
+        "activity_total": Decimal("0.00"),
+        "activity_count": 0,
+        "range_start": data.start_date,
+        "range_end": data.end_date,
+        "currency": user.default_currency,
+        "today_ist": _today_ist(),
+    }
+
+
+def profile_activity(user: User, data: DateRangeSchema) -> dict[str, object]:
+    payload = empty_activity_payload(user, data)
+
+    total, count = _period_totals(user.id, data.start_date, data.end_date)
+    if count == 0:
+        return payload
+
+    payload.update(
+        activity_expenses=list_expenses_in_range(
+            user.id, data.start_date, data.end_date
+        ),
+        activity_total=total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+        activity_count=count,
     )
     return payload

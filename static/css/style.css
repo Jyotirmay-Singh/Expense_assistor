@@ -19,6 +19,16 @@
     --border: #e4e1da;
     --border-soft: #eeebe4;
 
+    /* Category palette — single source of truth (dashboard + profile) */
+    --cat-bills: #1a472a;
+    --cat-food: #c17f24;
+    --cat-transport: #5b7fa6;
+    --cat-health: #8b5e83;
+    --cat-entertainment: #e67e22;
+    --cat-shopping: #2980b9;
+    --cat-education: #27ae60;
+    --cat-other: #6b6b6b;
+
     --font-display: 'DM Serif Display', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
 
@@ -1079,7 +1089,7 @@ a { color: inherit; text-decoration: none; }
     font-size: 0.8rem;
 }
 
-.db-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.db-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; --cat: var(--cat-other); background: var(--cat); }
 .db-legend-cat { color: var(--ink-soft); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .db-legend-amt { color: var(--ink-muted); font-variant-numeric: tabular-nums; text-align: right; }
 .db-legend-pct { color: var(--ink-faint); font-size: 0.72rem; text-align: right; }
@@ -1119,6 +1129,8 @@ a { color: inherit; text-decoration: none; }
     height: 100%;
     border-radius: 999px;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    --cat: var(--cat-other);
+    background: var(--cat);
 }
 
 /* ── Category badge ── */
@@ -1130,7 +1142,20 @@ a { color: inherit; text-decoration: none; }
     font-weight: 600;
     white-space: nowrap;
     letter-spacing: 0.01em;
+    --cat: var(--cat-other);
+    background: color-mix(in srgb, var(--cat) 12%, transparent);
+    color: var(--cat);
 }
+
+/* ── Category colour mapping (badges, legend dots, bar fills) ── */
+.cat-bills { --cat: var(--cat-bills); }
+.cat-food { --cat: var(--cat-food); }
+.cat-transport { --cat: var(--cat-transport); }
+.cat-health { --cat: var(--cat-health); }
+.cat-entertainment { --cat: var(--cat-entertainment); }
+.cat-shopping { --cat: var(--cat-shopping); }
+.cat-education { --cat: var(--cat-education); }
+.cat-other { --cat: var(--cat-other); }
 
 /* ── Add expense button ── */
 .db-add-btn {
@@ -1198,3 +1223,11 @@ a { color: inherit; text-decoration: none; }
     .db-breakdown-row { grid-template-columns: 1fr auto; }
     .db-bar-track     { display: none; }
 }
+
+/* ------------------------------------------------------------------ */
+/* HTMX loading indicator (profile activity filter)                    */
+/* ------------------------------------------------------------------ */
+
+.htmx-indicator { opacity: 0; transition: opacity 0.2s; }
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator { opacity: 1; }

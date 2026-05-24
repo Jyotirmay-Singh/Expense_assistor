@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Literal
 
 from email_validator import EmailNotValidError, validate_email
@@ -177,3 +178,19 @@ def coerce_period(raw: str | None) -> DashboardPeriodSchema:
         return DashboardPeriodSchema(period=raw)  # type: ignore[arg-type]
     except ValidationError:
         return DashboardPeriodSchema()
+
+
+# ------------------------------------------------------------------ #
+# Profile activity date-range schema                                   #
+# ------------------------------------------------------------------ #
+
+
+class DateRangeSchema(BaseModel):
+    start_date: date | None = None
+    end_date: date | None = None
+
+    @model_validator(mode="after")
+    def validate_bounds(self) -> "DateRangeSchema":
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValueError("End date cannot be before start date.")
+        return self

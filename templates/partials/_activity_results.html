@@ -1,0 +1,56 @@
+{# Swapped into #activity-results by HTMX; also included on full page load. #}
+{% if range_error %}
+<div class="mb-5 flex items-center gap-2 rounded-input border border-danger bg-danger-light px-4 py-3 text-sm font-medium text-danger">
+    <i data-lucide="alert-circle" class="icon-sm"></i>
+    {{ range_error }}
+</div>
+{% endif %}
+
+<p class="mb-5 text-sm text-ink-muted">
+    <strong class="text-ink">{{ activity_count }}</strong>
+    expense{{ 's' if activity_count != 1 else '' }}
+    &middot;
+    {{ "{:,.2f}".format(activity_total) }} {{ currency }}
+    &middot;
+    {% if range_start and range_end %}
+        {{ range_start.strftime('%d %b %Y') }} &rarr; {{ range_end.strftime('%d %b %Y') }}
+    {% elif range_start %}
+        From {{ range_start.strftime('%d %b %Y') }}
+    {% elif range_end %}
+        Up to {{ range_end.strftime('%d %b %Y') }}
+    {% else %}
+        All time
+    {% endif %}
+</p>
+
+{% if activity_expenses %}
+<div class="db-table-wrap">
+    <table class="db-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th class="db-th-num">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in activity_expenses %}
+            <tr class="db-tr">
+                <td class="db-td-date">{{ exp.date.strftime('%d %b %Y') }}</td>
+                <td class="db-td-title">{{ exp.title }}</td>
+                <td><span class="db-cat-badge cat-{{ exp.category|lower }}">{{ exp.category }}</span></td>
+                <td class="db-td-amt">
+                    {{ "{:,.2f}".format(exp.amount) }}
+                    <span class="db-td-ccy">{{ currency }}</span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% elif range_start or range_end %}
+<p class="db-empty">No expenses in this date range.</p>
+{% else %}
+<p class="db-empty">No expenses recorded yet.</p>
+{% endif %}

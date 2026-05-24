@@ -13,6 +13,7 @@ from database.schemas import (
     ALLOWED_CURRENCIES,
     DASHBOARD_PERIODS,
     ChangePasswordSchema,
+    DateRangeSchema,
     LoginSchema,
     ProfileUpdateSchema,
     RegisterSchema,
@@ -22,7 +23,9 @@ from database.schemas import (
 from database.services import (
     change_password,
     compute_dashboard,
+    empty_activity_payload,
     empty_dashboard_payload,
+    profile_activity,
     update_profile,
 )
 
@@ -263,10 +266,35 @@ def _register_main_routes(app: Flask) -> None:
     @app.route("/profile", methods=["GET"])
     @login_required
     def profile() -> ResponseReturnValue:
+        raw_start = request.args.get("start_date") or None
+        raw_end = request.args.get("end_date") or None
+
+        range_error: str | None = None
+        try:
+            date_range = DateRangeSchema(start_date=raw_start, end_date=raw_end)
+        except ValidationError as exc:
+            range_error = extract_messages(exc)[0]
+            date_range = DateRangeSchema()
+
+        try:
+            activity = profile_activity(current_user, date_range)
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error on /profile activity: %s", exc)
+            flash("A database error occurred loading your activity.", "error")
+            activity = empty_activity_payload(current_user, date_range)
+
+        activity["range_error"] = range_error
+        activity["raw_start"] = raw_start or ""
+        activity["raw_end"] = raw_end or ""
+
+        if request.headers.get("HX-Request"):
+            return render_template("partials/_activity_results.html", **activity)
         return render_template(
             "profile.html",
             user=current_user,
             currencies=ALLOWED_CURRENCIES,
+            **activity,
         )
 
     @app.route("/profile", methods=["POST"])
