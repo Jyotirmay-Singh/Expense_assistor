@@ -360,6 +360,11 @@ def _register_main_routes(app: Flask) -> None:
 
         return redirect(url_for("profile"))
 
+    @app.route("/analytics")
+    @login_required
+    def analytics() -> ResponseReturnValue:
+        return render_template("analytics.html", user=current_user)
+
     @app.route("/expenses/add")
     @login_required
     def add_expense() -> ResponseReturnValue:

@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(docker exec spendly_postgres *)"
+      "Bash(docker exec spendly_postgres *)",
+      "mcp__plugin_figma_figma__get_design_context"
     ]
   }
 }
