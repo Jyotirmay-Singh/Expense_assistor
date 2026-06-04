@@ -1,19 +1,29 @@
 import os
 from datetime import datetime, timedelta, timezone
 
-from flask import Flask, current_app, flash, redirect, render_template, request, url_for
+from flask import (
+    Flask,
+    abort,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask.typing import ResponseReturnValue
 from flask_login import current_user, login_required, login_user, logout_user
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from database.db import User, csrf, db, login_manager, migrate, seed_db
+from database.db import CATEGORIES, User, csrf, db, login_manager, migrate, seed_db
 from database.schemas import (
     ALLOWED_CURRENCIES,
     DASHBOARD_PERIODS,
     ChangePasswordSchema,
     DateRangeSchema,
+    ExpenseSchema,
     LoginSchema,
     ProfileUpdateSchema,
     RegisterSchema,
@@ -23,9 +33,14 @@ from database.schemas import (
 from database.services import (
     change_password,
     compute_dashboard,
+    create_expense,
+    destroy_expense,
     empty_activity_payload,
     empty_dashboard_payload,
+    get_expense_for_user,
+    list_user_expenses,
     profile_activity,
+    update_expense,
     update_profile,
 )
 
@@ -365,20 +380,176 @@ def _register_main_routes(app: Flask) -> None:
     def analytics() -> ResponseReturnValue:
         return render_template("analytics.html", user=current_user)
 
-    @app.route("/expenses/add")
+    # ── Expenses list ─────────────────────────────────────────────────
+
+    @app.route("/expenses")
+    @login_required
+    def expenses_list() -> ResponseReturnValue:
+        try:
+            expenses = list_user_expenses(current_user)
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error on /expenses: %s", exc)
+            flash("Could not load your expenses. Please try again.", "error")
+            expenses = []
+        return render_template(
+            "expenses.html",
+            user=current_user,
+            expenses=expenses,
+            currency=current_user.default_currency,
+        )
+
+    # ── Add expense ───────────────────────────────────────────────────
+
+    @app.route("/expenses/add", methods=["GET"])
     @login_required
     def add_expense() -> ResponseReturnValue:
-        return "Add expense — coming in Step 7"
+        from datetime import date as _date
 
-    @app.route("/expenses/<int:id>/edit")
+        return render_template(
+            "expense_form.html",
+            user=current_user,
+            categories=CATEGORIES,
+            page_title="Add Expense",
+            submit_label="Add Expense",
+            form_data={
+                "title": "",
+                "amount": "",
+                "category": "",
+                "date": _date.today().isoformat(),
+                "notes": "",
+            },
+            expense_id=None,
+        )
+
+    @app.route("/expenses/add", methods=["POST"])
+    @login_required
+    def add_expense_post() -> ResponseReturnValue:
+        from datetime import date as _date
+
+        raw = {
+            "title": request.form.get("title", ""),
+            "amount": request.form.get("amount", ""),
+            "category": request.form.get("category", ""),
+            "date": request.form.get("date", _date.today().isoformat()),
+            "notes": request.form.get("notes", ""),
+        }
+        try:
+            data = ExpenseSchema(**raw)
+        except ValidationError as exc:
+            for msg in extract_messages(exc):
+                flash(msg, "error")
+            return render_template(
+                "expense_form.html",
+                user=current_user,
+                categories=CATEGORIES,
+                page_title="Add Expense",
+                submit_label="Add Expense",
+                form_data=raw,
+                expense_id=None,
+            )
+        try:
+            create_expense(current_user, data)
+            flash("Expense added.", "success")
+            return redirect(url_for("expenses_list"))
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error adding expense: %s", exc)
+            flash("A database error occurred. Please try again.", "error")
+            return render_template(
+                "expense_form.html",
+                user=current_user,
+                categories=CATEGORIES,
+                page_title="Add Expense",
+                submit_label="Add Expense",
+                form_data=raw,
+                expense_id=None,
+            )
+
+    # ── Edit expense ──────────────────────────────────────────────────
+
+    @app.route("/expenses/<int:id>/edit", methods=["GET"])
     @login_required
     def edit_expense(id: int) -> ResponseReturnValue:
-        return "Edit expense — coming in Step 8"
+        expense = get_expense_for_user(id, current_user.id)
+        if expense is None:
+            abort(404)
+        return render_template(
+            "expense_form.html",
+            user=current_user,
+            categories=CATEGORIES,
+            page_title="Edit Expense",
+            submit_label="Save Changes",
+            form_data={
+                "title": expense.title,
+                "amount": str(expense.amount),
+                "category": expense.category,
+                "date": expense.date.isoformat(),
+                "notes": expense.notes or "",
+            },
+            expense_id=id,
+        )
 
-    @app.route("/expenses/<int:id>/delete")
+    @app.route("/expenses/<int:id>/edit", methods=["POST"])
+    @login_required
+    def edit_expense_post(id: int) -> ResponseReturnValue:
+        expense = get_expense_for_user(id, current_user.id)
+        if expense is None:
+            abort(404)
+        raw = {
+            "title": request.form.get("title", ""),
+            "amount": request.form.get("amount", ""),
+            "category": request.form.get("category", ""),
+            "date": request.form.get("date", ""),
+            "notes": request.form.get("notes", ""),
+        }
+        try:
+            data = ExpenseSchema(**raw)
+        except ValidationError as exc:
+            for msg in extract_messages(exc):
+                flash(msg, "error")
+            return render_template(
+                "expense_form.html",
+                user=current_user,
+                categories=CATEGORIES,
+                page_title="Edit Expense",
+                submit_label="Save Changes",
+                form_data=raw,
+                expense_id=id,
+            )
+        try:
+            update_expense(expense, data)
+            flash("Expense updated.", "success")
+            return redirect(url_for("expenses_list"))
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error updating expense %s: %s", id, exc)
+            flash("A database error occurred. Please try again.", "error")
+            return render_template(
+                "expense_form.html",
+                user=current_user,
+                categories=CATEGORIES,
+                page_title="Edit Expense",
+                submit_label="Save Changes",
+                form_data=raw,
+                expense_id=id,
+            )
+
+    # ── Delete expense ────────────────────────────────────────────────
+
+    @app.route("/expenses/<int:id>/delete", methods=["POST"])
     @login_required
     def delete_expense(id: int) -> ResponseReturnValue:
-        return "Delete expense — coming in Step 9"
+        try:
+            found = destroy_expense(id, current_user.id)
+            if not found:
+                abort(404)
+            flash("Expense deleted.", "info")
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error deleting expense %s: %s", id, exc)
+            flash("A database error occurred. Please try again.", "error")
+        return redirect(url_for("expenses_list"))
 
     @app.route("/terms")
     def terms() -> ResponseReturnValue:

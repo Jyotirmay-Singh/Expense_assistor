@@ -7,7 +7,12 @@ from flask import current_app
 from sqlalchemy import func, select
 
 from database.db import Expense, User, db
-from database.schemas import ChangePasswordSchema, DateRangeSchema, ProfileUpdateSchema
+from database.schemas import (
+    ChangePasswordSchema,
+    DateRangeSchema,
+    ExpenseSchema,
+    ProfileUpdateSchema,
+)
 
 
 def update_profile(user: User, data: ProfileUpdateSchema) -> None:
@@ -220,3 +225,60 @@ def profile_activity(user: User, data: DateRangeSchema) -> dict[str, object]:
         activity_count=count,
     )
     return payload
+
+
+# ------------------------------------------------------------------ #
+# Expense CRUD                                                         #
+# ------------------------------------------------------------------ #
+
+
+def list_user_expenses(user: User) -> list[Expense]:
+    return list(
+        db.session.execute(
+            select(Expense)
+            .where(Expense.user_id == user.id)
+            .order_by(Expense.date.desc(), Expense.id.desc())
+        ).scalars()
+    )
+
+
+def get_expense_for_user(expense_id: int, user_id: int) -> Expense | None:
+    return db.session.execute(
+        select(Expense).where(
+            Expense.id == expense_id,
+            Expense.user_id == user_id,
+        )
+    ).scalar_one_or_none()
+
+
+def create_expense(user: User, data: ExpenseSchema) -> Expense:
+    expense = Expense(
+        user_id=user.id,
+        title=data.title,
+        amount=data.amount,
+        category=data.category,
+        date=data.date,
+        notes=data.notes,
+    )
+    db.session.add(expense)
+    db.session.commit()
+    return expense
+
+
+def update_expense(expense: Expense, data: ExpenseSchema) -> Expense:
+    expense.title = data.title
+    expense.amount = data.amount
+    expense.category = data.category
+    expense.date = data.date
+    expense.notes = data.notes
+    db.session.commit()
+    return expense
+
+
+def destroy_expense(expense_id: int, user_id: int) -> bool:
+    expense = get_expense_for_user(expense_id, user_id)
+    if expense is None:
+        return False
+    db.session.delete(expense)
+    db.session.commit()
+    return True

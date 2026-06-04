@@ -1,8 +1,11 @@
 from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
 
 from email_validator import EmailNotValidError, validate_email
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
+
+from database.db import CATEGORIES
 
 
 ALLOWED_CURRENCIES: tuple[str, ...] = (
@@ -194,3 +197,66 @@ class DateRangeSchema(BaseModel):
         if self.start_date and self.end_date and self.end_date < self.start_date:
             raise ValueError("End date cannot be before start date.")
         return self
+
+
+# ------------------------------------------------------------------ #
+# Expense create / update schema                                       #
+# ------------------------------------------------------------------ #
+
+
+class ExpenseSchema(BaseModel):
+    title: str
+    amount: Decimal
+    category: str
+    date: date
+    notes: str | None = None
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Title is required.")
+        if len(v) > 200:
+            raise ValueError("Title must not exceed 200 characters.")
+        return v
+
+    @field_validator("amount", mode="before")
+    @classmethod
+    def validate_amount(cls, v: object) -> Decimal:
+        try:
+            d = Decimal(str(v).strip())
+        except Exception:
+            raise ValueError("Enter a valid amount.")
+        if d <= 0:
+            raise ValueError("Amount must be greater than zero.")
+        if d > Decimal("9999999.99"):
+            raise ValueError("Amount is too large.")
+        return d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    @field_validator("category")
+    @classmethod
+    def validate_category(cls, v: str) -> str:
+        if v not in CATEGORIES:
+            raise ValueError("Please select a valid category.")
+        return v
+
+    @field_validator("date", mode="before")
+    @classmethod
+    def validate_date(cls, v: object) -> date:
+        if isinstance(v, date):
+            return v
+        try:
+            return date.fromisoformat(str(v).strip())
+        except ValueError:
+            raise ValueError("Enter a valid date (YYYY-MM-DD).")
+
+    @field_validator("notes")
+    @classmethod
+    def validate_notes(cls, v: str | None) -> str | None:
+        if not v or not v.strip():
+            return None
+        v = v.strip()
+        if len(v) > 1000:
+            raise ValueError("Notes must not exceed 1000 characters.")
+        return v

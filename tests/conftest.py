@@ -31,6 +31,7 @@ from database.db import Expense, User, db as _db  # noqa: E402
 # App fixture
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="session")
 def app():
     """Create a Flask application configured for testing.
@@ -42,7 +43,7 @@ def app():
     flask_app = create_app()
     flask_app.config.update(
         TESTING=True,
-        WTF_CSRF_ENABLED=False,          # disable CSRF for form-POST tests
+        WTF_CSRF_ENABLED=False,  # disable CSRF for form-POST tests
         WTF_CSRF_CHECK_DEFAULT=False,
         # Keep the same DB URI; override only if env var is set for CI
         SQLALCHEMY_DATABASE_URI=os.environ.get(
@@ -60,6 +61,7 @@ def app():
 # Database session fixture
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="session")
 def db(app):
     """Return the SQLAlchemy db extension bound to the test app."""
@@ -70,6 +72,7 @@ def db(app):
 # ---------------------------------------------------------------------------
 # Request-scoped DB session helper
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def db_session(app):
@@ -84,6 +87,7 @@ def db_session(app):
 # ---------------------------------------------------------------------------
 # HTTP test client
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def client(app):
@@ -131,6 +135,7 @@ def demo_user(app, db_session):
 # Demo user expenses fixture
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def demo_expenses(app, db_session, demo_user):
     """Ensure the 8 canonical May-2026 seed expenses exist for demo_user.
@@ -140,20 +145,62 @@ def demo_expenses(app, db_session, demo_user):
     Yields the list of created (or found) Expense objects.
     """
     seed_rows = [
-        dict(title="Electricity bill", amount=Decimal("2200.00"), category="Bills",         date=date(2026, 5, 1)),
-        dict(title="Groceries",        amount=Decimal("1850.50"), category="Food",          date=date(2026, 5, 3)),
-        dict(title="Metro pass",       amount=Decimal("500.00"),  category="Transport",     date=date(2026, 5, 5)),
-        dict(title="Doctor visit",     amount=Decimal("700.00"),  category="Health",        date=date(2026, 5, 8)),
-        dict(title="Netflix",          amount=Decimal("649.00"),  category="Entertainment", date=date(2026, 5, 10)),
-        dict(title="Python books",     amount=Decimal("850.00"),  category="Education",     date=date(2026, 5, 12)),
-        dict(title="Shirt",            amount=Decimal("1200.00"), category="Shopping",      date=date(2026, 5, 14)),
-        dict(title="Water bill",       amount=Decimal("350.00"),  category="Bills",         date=date(2026, 5, 15)),
+        dict(
+            title="Electricity bill",
+            amount=Decimal("2200.00"),
+            category="Bills",
+            date=date(2026, 5, 1),
+        ),
+        dict(
+            title="Groceries",
+            amount=Decimal("1850.50"),
+            category="Food",
+            date=date(2026, 5, 3),
+        ),
+        dict(
+            title="Metro pass",
+            amount=Decimal("500.00"),
+            category="Transport",
+            date=date(2026, 5, 5),
+        ),
+        dict(
+            title="Doctor visit",
+            amount=Decimal("700.00"),
+            category="Health",
+            date=date(2026, 5, 8),
+        ),
+        dict(
+            title="Netflix",
+            amount=Decimal("649.00"),
+            category="Entertainment",
+            date=date(2026, 5, 10),
+        ),
+        dict(
+            title="Python books",
+            amount=Decimal("850.00"),
+            category="Education",
+            date=date(2026, 5, 12),
+        ),
+        dict(
+            title="Shirt",
+            amount=Decimal("1200.00"),
+            category="Shopping",
+            date=date(2026, 5, 14),
+        ),
+        dict(
+            title="Water bill",
+            amount=Decimal("350.00"),
+            category="Bills",
+            date=date(2026, 5, 15),
+        ),
     ]
 
     # Wipe any pre-existing expenses for demo_user to guarantee a clean slate
-    existing = db_session.execute(
-        select(Expense).filter_by(user_id=demo_user.id)
-    ).scalars().all()
+    existing = (
+        db_session.execute(select(Expense).filter_by(user_id=demo_user.id))
+        .scalars()
+        .all()
+    )
     for exp in existing:
         db_session.delete(exp)
     db_session.commit()
@@ -178,6 +225,7 @@ def demo_expenses(app, db_session, demo_user):
 # ---------------------------------------------------------------------------
 # Authenticated client (demo user)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def auth_client(app, demo_user):
