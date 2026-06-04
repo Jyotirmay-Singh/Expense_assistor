@@ -37,16 +37,13 @@ Seed data (8 expenses, all May 2026, demo@spendly.dev / Demo@1234):
   Total            8299.50 INR
 """
 
-import re
-from decimal import Decimal
-
-import pytest
 from flask import url_for
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _html(response) -> str:
     """Decode the response body to a UTF-8 string."""
@@ -97,7 +94,9 @@ def test_profile_full_page_no_filter_returns_200(auth_client, demo_expenses, app
     assert response.status_code == 200
 
 
-def test_profile_full_page_no_filter_shows_all_8_expenses(auth_client, demo_expenses, app):
+def test_profile_full_page_no_filter_shows_all_8_expenses(
+    auth_client, demo_expenses, app
+):
     # Spec §DoD-2 — all 8 seed expenses appear in the activity list
     with app.app_context():
         url = url_for("profile")
@@ -105,8 +104,14 @@ def test_profile_full_page_no_filter_shows_all_8_expenses(auth_client, demo_expe
     html = _html(response)
     # Each expense title should appear exactly once
     for title in (
-        "Electricity bill", "Groceries", "Metro pass", "Doctor visit",
-        "Netflix", "Python books", "Shirt", "Water bill",
+        "Electricity bill",
+        "Groceries",
+        "Metro pass",
+        "Doctor visit",
+        "Netflix",
+        "Python books",
+        "Shirt",
+        "Water bill",
     ):
         assert title in html, f"Expected expense title '{title}' not found"
 
@@ -130,7 +135,9 @@ def test_profile_full_page_no_filter_total_8299_50(auth_client, demo_expenses, a
     assert "8,299.50" in html
 
 
-def test_profile_full_page_no_filter_shows_all_time_label(auth_client, demo_expenses, app):
+def test_profile_full_page_no_filter_shows_all_time_label(
+    auth_client, demo_expenses, app
+):
     # Spec §Templates — "All time" label when no date bounds are active
     with app.app_context():
         url = url_for("profile")
@@ -139,7 +146,9 @@ def test_profile_full_page_no_filter_shows_all_time_label(auth_client, demo_expe
     assert "All time" in html
 
 
-def test_profile_full_page_no_filter_empty_state_absent(auth_client, demo_expenses, app):
+def test_profile_full_page_no_filter_empty_state_absent(
+    auth_client, demo_expenses, app
+):
     # Spec §DoD-2 — empty-state messages must NOT appear when there are expenses
     with app.app_context():
         url = url_for("profile")
@@ -156,7 +165,7 @@ def test_profile_full_page_is_not_partial(auth_client, demo_expenses, app):
     response = auth_client.get(url)
     html = _html(response)
     assert "<!DOCTYPE" in html or "<!doctype" in html.lower()
-    assert '<nav' in html
+    assert "<nav" in html
 
 
 # ---------------------------------------------------------------------------
@@ -164,13 +173,13 @@ def test_profile_full_page_is_not_partial(auth_client, demo_expenses, app):
 # ---------------------------------------------------------------------------
 
 
-def test_profile_full_page_with_valid_range_returns_200(auth_client, demo_expenses, app):
+def test_profile_full_page_with_valid_range_returns_200(
+    auth_client, demo_expenses, app
+):
     # Spec §DoD-3 — GET /profile?start_date=...&end_date=... returns 200
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-05&end_date=2026-05-12"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-05&end_date=2026-05-12")
     assert response.status_code == 200
 
 
@@ -178,9 +187,7 @@ def test_profile_full_page_with_range_shows_4_expenses(auth_client, demo_expense
     # Spec §DoD-3 — 2026-05-05 to 2026-05-12 inclusive returns exactly 4 rows
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-05&end_date=2026-05-12"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-05&end_date=2026-05-12")
     html = _html(response)
     for title in ("Metro pass", "Doctor visit", "Netflix", "Python books"):
         assert title in html, f"Expected '{title}' in filtered results"
@@ -192,9 +199,7 @@ def test_profile_full_page_with_range_excludes_out_of_range_expenses(
     # Spec §DoD-3 — expenses outside the range must NOT appear
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-05&end_date=2026-05-12"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-05&end_date=2026-05-12")
     html = _html(response)
     for title in ("Electricity bill", "Groceries", "Shirt", "Water bill"):
         assert title not in html, f"Out-of-range expense '{title}' leaked into results"
@@ -204,9 +209,7 @@ def test_profile_full_page_with_range_total_2699_00(auth_client, demo_expenses, 
     # Spec §DoD-3 — filtered total must be 2,699.00 INR
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-05&end_date=2026-05-12"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-05&end_date=2026-05-12")
     html = _html(response)
     assert "2,699.00" in html
 
@@ -217,9 +220,7 @@ def test_profile_full_page_with_range_is_full_page_not_partial(
     # Spec §Implementation — without HX-Request header, always full page
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-05&end_date=2026-05-12"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-05&end_date=2026-05-12")
     html = _html(response)
     assert "<!DOCTYPE" in html or "<!doctype" in html.lower()
     assert "<nav" in html
@@ -248,9 +249,7 @@ def test_profile_htmx_request_returns_partial_not_full_page(
     assert "<nav" not in html
 
 
-def test_profile_htmx_partial_contains_4_expense_rows(
-    auth_client, demo_expenses, app
-):
+def test_profile_htmx_partial_contains_4_expense_rows(auth_client, demo_expenses, app):
     # Spec §DoD-3 / HTMX variant — fragment has the 4 in-range expense titles
     with app.app_context():
         url = url_for("profile")
@@ -364,9 +363,7 @@ def test_profile_reversed_dates_returns_200(auth_client, demo_expenses, app):
     #   no server error
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-31&end_date=2026-05-01"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-31&end_date=2026-05-01")
     assert response.status_code == 200
 
 
@@ -375,9 +372,7 @@ def test_profile_reversed_dates_shows_error_banner(auth_client, demo_expenses, a
     #   message "End date cannot be before start date."
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-31&end_date=2026-05-01"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-31&end_date=2026-05-01")
     html = _html(response)
     assert "End date cannot be before start date." in html
 
@@ -389,17 +384,20 @@ def test_profile_reversed_dates_fallback_shows_all_8_expenses(
     #   to unbounded (DateRangeSchema() with no dates), returning all 8 rows
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-31&end_date=2026-05-01"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-31&end_date=2026-05-01")
     html = _html(response)
     for title in (
-        "Electricity bill", "Groceries", "Metro pass", "Doctor visit",
-        "Netflix", "Python books", "Shirt", "Water bill",
+        "Electricity bill",
+        "Groceries",
+        "Metro pass",
+        "Doctor visit",
+        "Netflix",
+        "Python books",
+        "Shirt",
+        "Water bill",
     ):
         assert title in html, (
-            f"Expected all 8 expenses after reversed-date fallback; "
-            f"'{title}' not found"
+            f"Expected all 8 expenses after reversed-date fallback; '{title}' not found"
         )
 
 
@@ -420,9 +418,7 @@ def test_profile_garbage_both_dates_returns_200(auth_client, demo_expenses, app)
     # Spec §DoD-6 — both params garbage → treated as unbounded → 200
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=not-a-date&end_date=2026-13-99"
-    )
+    response = auth_client.get(url + "?start_date=not-a-date&end_date=2026-13-99")
     assert response.status_code == 200
 
 
@@ -447,8 +443,14 @@ def test_profile_garbage_params_treats_bounds_as_unbounded(
     response = auth_client.get(url + "?start_date=not-a-date&end_date=2026-13-99")
     html = _html(response)
     for title in (
-        "Electricity bill", "Groceries", "Metro pass", "Doctor visit",
-        "Netflix", "Python books", "Shirt", "Water bill",
+        "Electricity bill",
+        "Groceries",
+        "Metro pass",
+        "Doctor visit",
+        "Netflix",
+        "Python books",
+        "Shirt",
+        "Water bill",
     ):
         assert title in html, (
             f"Expected all expenses with garbage params; '{title}' missing"
@@ -464,9 +466,7 @@ def test_profile_no_match_range_returns_200(auth_client, demo_expenses, app):
     # Spec §DoD-7 — a range that matches nothing returns HTTP 200
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2000-01-01&end_date=2000-12-31"
-    )
+    response = auth_client.get(url + "?start_date=2000-01-01&end_date=2000-12-31")
     assert response.status_code == 200
 
 
@@ -477,9 +477,7 @@ def test_profile_no_match_range_shows_empty_state_message(
     #   but yields zero rows
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2000-01-01&end_date=2000-12-31"
-    )
+    response = auth_client.get(url + "?start_date=2000-01-01&end_date=2000-12-31")
     html = _html(response)
     assert "No expenses in this date range." in html
 
@@ -491,9 +489,7 @@ def test_profile_no_match_range_does_not_show_recorded_yet_message(
     #   NOT for a filtered zero result (the filter is active here)
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2000-01-01&end_date=2000-12-31"
-    )
+    response = auth_client.get(url + "?start_date=2000-01-01&end_date=2000-12-31")
     html = _html(response)
     assert "No expenses recorded yet." not in html
 
@@ -502,9 +498,7 @@ def test_profile_no_match_range_shows_zero_total(auth_client, demo_expenses, app
     # Spec §Templates — summary total is 0.00 when no rows match
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2000-01-01&end_date=2000-12-31"
-    )
+    response = auth_client.get(url + "?start_date=2000-01-01&end_date=2000-12-31")
     html = _html(response)
     assert "0.00" in html
 
@@ -543,9 +537,7 @@ def test_profile_zero_expense_user_count_is_0(second_auth_client, second_user, a
     assert ">0<" in html or "0\n" in html or "0 expense" in html
 
 
-def test_profile_zero_expense_user_total_is_0_00(
-    second_auth_client, second_user, app
-):
+def test_profile_zero_expense_user_total_is_0_00(second_auth_client, second_user, app):
     # Spec §DoD-8 — total is 0.00 <currency>
     with app.app_context():
         url = url_for("profile")
@@ -554,9 +546,7 @@ def test_profile_zero_expense_user_total_is_0_00(
     assert "0.00" in html
 
 
-def test_profile_zero_expense_user_no_range_error(
-    second_auth_client, second_user, app
-):
+def test_profile_zero_expense_user_no_range_error(second_auth_client, second_user, app):
     # Zero-expense user with a valid range: no error banner, just empty-range message
     with app.app_context():
         url = url_for("profile")
@@ -594,8 +584,14 @@ def test_profile_user_isolation_second_user_cannot_see_demo_expenses(
     response = second_auth_client.get(url)
     html = _html(response)
     for title in (
-        "Electricity bill", "Groceries", "Metro pass", "Doctor visit",
-        "Netflix", "Python books", "Shirt", "Water bill",
+        "Electricity bill",
+        "Groceries",
+        "Metro pass",
+        "Doctor visit",
+        "Netflix",
+        "Python books",
+        "Shirt",
+        "Water bill",
     ):
         assert title not in html, (
             f"Demo expense '{title}' leaked into second user's profile"
@@ -625,8 +621,14 @@ def test_profile_user_isolation_date_range_does_not_break_scoping(
     )
     html = _html(response)
     for title in (
-        "Electricity bill", "Groceries", "Metro pass", "Doctor visit",
-        "Netflix", "Python books", "Shirt", "Water bill",
+        "Electricity bill",
+        "Groceries",
+        "Metro pass",
+        "Doctor visit",
+        "Netflix",
+        "Python books",
+        "Shirt",
+        "Water bill",
     ):
         assert title not in html, (
             f"Demo expense '{title}' leaked through date-range query"
@@ -649,17 +651,21 @@ def test_profile_amounts_render_with_two_decimal_places(
     html = _html(response)
     # Known amounts from seed data — verify rendered with 2 d.p.
     for amount_str in (
-        "2,200.00", "1,850.50", "500.00", "700.00",
-        "649.00", "850.00", "1,200.00", "350.00",
+        "2,200.00",
+        "1,850.50",
+        "500.00",
+        "700.00",
+        "649.00",
+        "850.00",
+        "1,200.00",
+        "350.00",
     ):
         assert amount_str in html, (
             f"Expected '{amount_str}' formatted with two decimal places"
         )
 
 
-def test_profile_summary_total_has_two_decimal_places(
-    auth_client, demo_expenses, app
-):
+def test_profile_summary_total_has_two_decimal_places(auth_client, demo_expenses, app):
     # Spec §DoD-12 — activity_total is quantised to 0.01 before reaching template
     with app.app_context():
         url = url_for("profile")
@@ -671,15 +677,11 @@ def test_profile_summary_total_has_two_decimal_places(
     assert "8,299.5 " not in html  # accidental single d.p.
 
 
-def test_profile_filtered_total_has_two_decimal_places(
-    auth_client, demo_expenses, app
-):
+def test_profile_filtered_total_has_two_decimal_places(auth_client, demo_expenses, app):
     # Spec §Rules §Decimal-discipline — filtered total also correctly formatted
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-05&end_date=2026-05-12"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-05&end_date=2026-05-12")
     html = _html(response)
     assert "2,699.00" in html
 
@@ -706,23 +708,17 @@ def test_profile_filter_inputs_prefilled_with_start_date(
     # Spec §DoD-9 — after filtering, start_date input value echoes the param
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-05&end_date=2026-05-12"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-05&end_date=2026-05-12")
     html = _html(response)
     # The template sets value="{{ raw_start }}" on the start_date input
     assert 'value="2026-05-05"' in html
 
 
-def test_profile_filter_inputs_prefilled_with_end_date(
-    auth_client, demo_expenses, app
-):
+def test_profile_filter_inputs_prefilled_with_end_date(auth_client, demo_expenses, app):
     # Spec §DoD-9 — after filtering, end_date input value echoes the param
     with app.app_context():
         url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-05&end_date=2026-05-12"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-05&end_date=2026-05-12")
     html = _html(response)
     assert 'value="2026-05-12"' in html
 
@@ -745,9 +741,7 @@ def test_profile_clear_link_points_to_unfiltered_profile(
     with app.app_context():
         url = url_for("profile")
         profile_url = url_for("profile")
-    response = auth_client.get(
-        url + "?start_date=2026-05-05&end_date=2026-05-12"
-    )
+    response = auth_client.get(url + "?start_date=2026-05-05&end_date=2026-05-12")
     html = _html(response)
     # The Clear link must target the plain profile URL without query params
     assert f'href="{profile_url}"' in html
@@ -776,9 +770,7 @@ def test_profile_page_has_nav_element(auth_client, demo_expenses, app):
     assert "<nav" in html
 
 
-def test_profile_page_filter_form_action_uses_url_for(
-    auth_client, demo_expenses, app
-):
+def test_profile_page_filter_form_action_uses_url_for(auth_client, demo_expenses, app):
     # Spec §Rules §Always-use-url_for — filter form action must be /profile
     #   (i.e. url_for('profile') resolves to /profile)
     with app.app_context():
@@ -786,4 +778,6 @@ def test_profile_page_filter_form_action_uses_url_for(
         expected_action = url_for("profile")
     response = auth_client.get(url)
     html = _html(response)
-    assert f'hx-get="{expected_action}"' in html or f'action="{expected_action}"' in html
+    assert (
+        f'hx-get="{expected_action}"' in html or f'action="{expected_action}"' in html
+    )

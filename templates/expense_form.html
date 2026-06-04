@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} — Spendly{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+<div class="profile-container" data-aos="fade-up" data-aos-duration="600">
+
+  <article class="profile-card" style="max-width:560px;margin:0 auto;">
+    <h2 class="profile-card-title">
+      <i data-lucide="{{ 'plus-circle' if not expense_id else 'pencil' }}" class="icon-sm"></i>
+      {{ page_title }}
+    </h2>
+
+    <form method="POST"
+          action="{{ url_for('add_expense_post') if not expense_id else url_for('edit_expense_post', id=expense_id) }}"
+          novalidate
+          x-data="{ loading: false }"
+          @submit="loading = true">
+
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      {# ── Title ────────────────────────────────────────────────────── #}
+      <div class="form-group">
+        <label for="title">Description</label>
+        <input type="text"
+               id="title"
+               name="title"
+               class="form-input"
+               value="{{ form_data.title }}"
+               maxlength="200"
+               placeholder="e.g. Grocery run, Netflix subscription…"
+               required
+               autocomplete="off">
+      </div>
+
+      {# ── Amount ───────────────────────────────────────────────────── #}
+      <div class="form-group">
+        <label for="amount">Amount ({{ user.default_currency }})</label>
+        <input type="number"
+               id="amount"
+               name="amount"
+               class="form-input"
+               value="{{ form_data.amount }}"
+               min="0.01"
+               step="0.01"
+               placeholder="0.00"
+               required>
+      </div>
+
+      {# ── Category ─────────────────────────────────────────────────── #}
+      <div class="form-group">
+        <label for="category">Category</label>
+        <select id="category" name="category" class="form-select" required>
+          <option value="" disabled {% if not form_data.category %}selected{% endif %}>
+            Select a category
+          </option>
+          {% for cat in categories %}
+          <option value="{{ cat }}"
+                  {% if form_data.category == cat %}selected{% endif %}>
+            {{ cat }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {# ── Date ─────────────────────────────────────────────────────── #}
+      <div class="form-group">
+        <label for="date">Date</label>
+        <input type="date"
+               id="date"
+               name="date"
+               class="form-input"
+               value="{{ form_data.date }}"
+               required>
+      </div>
+
+      {# ── Notes ────────────────────────────────────────────────────── #}
+      <div class="form-group">
+        <label for="notes">Notes <span class="form-hint" style="display:inline;">(optional)</span></label>
+        <textarea id="notes"
+                  name="notes"
+                  class="form-input"
+                  rows="3"
+                  maxlength="1000"
+                  placeholder="Any extra details…">{{ form_data.notes }}</textarea>
+      </div>
+
+      {# ── Actions ──────────────────────────────────────────────────── #}
+      <div style="display:flex;gap:0.75rem;align-items:center;margin-top:1.5rem;">
+        <button type="submit" class="btn-submit" style="flex:1;" :disabled="loading">
+          <span class="btn-loading">
+            <i data-lucide="loader-circle" class="icon-spin" x-show="loading" x-cloak></i>
+            <span x-text="loading ? 'Saving…' : '{{ submit_label }}'">{{ submit_label }}</span>
+          </span>
+        </button>
+        <a href="{{ url_for('expenses_list') }}" class="btn-ghost">Cancel</a>
+      </div>
+
+    </form>
+  </article>
+
+</div>
+</section>
+{% endblock %}

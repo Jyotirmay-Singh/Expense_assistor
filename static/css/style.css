@@ -1232,3 +1232,31 @@ a { color: inherit; text-decoration: none; }
 .htmx-indicator { opacity: 0; transition: opacity 0.2s; }
 .htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator { opacity: 1; }
+
+/* ------------------------------------------------------------------ */
+/* Expense list — action buttons                                        */
+/* ------------------------------------------------------------------ */
+
+.exp-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+.exp-btn-edit {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: var(--radius-sm);
+    color: var(--ink-muted); background: transparent;
+    border: 1px solid var(--border); text-decoration: none;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.exp-btn-edit:hover {
+    color: var(--accent); border-color: var(--accent); background: var(--accent-light);
+}
+
+.exp-btn-danger {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: var(--radius-sm);
+    color: var(--ink-muted); background: transparent;
+    border: 1px solid var(--border); cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.exp-btn-danger:hover {
+    color: var(--danger); border-color: var(--danger); background: var(--danger-light);
+}

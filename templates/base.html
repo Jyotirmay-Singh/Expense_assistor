@@ -50,6 +50,8 @@
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('dashboard') }}"
                        class="{% if request.endpoint == 'dashboard' %}is-active{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('expenses_list') }}"
+                       class="{% if request.endpoint in ('expenses_list', 'add_expense', 'add_expense_post', 'edit_expense', 'edit_expense_post', 'delete_expense') %}is-active{% endif %}">Expenses</a>
                     <a href="{{ url_for('profile') }}"
                        class="{% if request.endpoint in ('profile', 'profile_update', 'change_password_route') %}is-active{% endif %}">Profile</a>
                     <a href="{{ url_for('analytics') }}"
