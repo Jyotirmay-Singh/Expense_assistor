@@ -9,7 +9,6 @@ from sqlalchemy import delete, func, select
 from database.db import Expense, User, db
 from database.schemas import (
     ChangePasswordSchema,
-    DateRangeSchema,
     ExpenseSchema,
     ProfileUpdateSchema,
 )
@@ -49,7 +48,12 @@ def _today_ist() -> date:
     return datetime.now(tz=_IST).date()
 
 
-def _period_bounds(period: str) -> tuple[date | None, date | None]:
+def _period_bounds(
+    period: str, start_date: date | None = None, end_date: date | None = None
+) -> tuple[date | None, date | None]:
+    if period == "custom":
+        return (start_date, end_date)
+
     if period == "all_time":
         return (None, None)
 
@@ -150,46 +154,28 @@ def _daily_series(
     ]
 
 
-def empty_dashboard_payload(user: User, period: str) -> dict[str, object]:
-    lo, hi = _period_bounds(period)
-    return {
-        "total_amount": Decimal("0.00"),
-        "expense_count": 0,
-        "average_amount": Decimal("0.00"),
-        "category_breakdown": [],
-        "recent_expenses": [],
-        "daily_series": [],
-        "currency": user.default_currency,
-        "period_start": lo,
-        "period_end": hi,
-    }
+def _median_amount(uid: int, lo: date | None, hi: date | None) -> Decimal | None:
+    result = db.session.execute(
+        select(func.percentile_cont(0.5).within_group(Expense.amount)).where(
+            *_where_user_and_period(uid, lo, hi)
+        )
+    ).scalar_one_or_none()
+    if result is None:
+        return None
+    return Decimal(str(result)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
-def compute_dashboard(user: User, period: str) -> dict[str, object]:
-    lo, hi = _period_bounds(period)
-    payload: dict[str, object] = empty_dashboard_payload(user, period)
-
-    total, count = _period_totals(user.id, lo, hi)
-    if count == 0:
-        return payload
-
-    total_q = total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    avg_q = (total / count).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-    payload.update(
-        total_amount=total_q,
-        expense_count=count,
-        average_amount=avg_q,
-        category_breakdown=_category_breakdown(user.id, lo, hi, total),
-        recent_expenses=_recent_expenses(user.id, lo, hi),
-        daily_series=_daily_series(user.id, lo, hi),
-    )
-    return payload
-
-
-# ------------------------------------------------------------------ #
-# Profile activity (custom date range)                                 #
-# ------------------------------------------------------------------ #
+def _busiest_day(uid: int, lo: date | None, hi: date | None) -> tuple[date, int] | None:
+    row = db.session.execute(
+        select(Expense.date, func.count(Expense.id).label("cnt"))
+        .where(*_where_user_and_period(uid, lo, hi))
+        .group_by(Expense.date)
+        .order_by(func.count(Expense.id).desc(), Expense.date.desc())
+        .limit(1)
+    ).first()
+    if row is None:
+        return None
+    return (row[0], row[1])
 
 
 def list_expenses_in_range(
@@ -204,31 +190,65 @@ def list_expenses_in_range(
     )
 
 
-def empty_activity_payload(user: User, data: DateRangeSchema) -> dict[str, object]:
+def empty_dashboard_payload(
+    user: User,
+    period: str,
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> dict[str, object]:
+    lo, hi = _period_bounds(period, start_date, end_date)
     return {
-        "activity_expenses": [],
-        "activity_total": Decimal("0.00"),
-        "activity_count": 0,
-        "range_start": data.start_date,
-        "range_end": data.end_date,
+        "total_amount": Decimal("0.00"),
+        "expense_count": 0,
+        "average_amount": Decimal("0.00"),
+        "median_amount": None,
+        "busiest_day_date": None,
+        "busiest_day_count": 0,
+        "category_breakdown": [],
+        "recent_expenses": [],
+        "daily_series": [],
         "currency": user.default_currency,
+        "period_start": lo,
+        "period_end": hi,
         "today_ist": _today_ist(),
     }
 
 
-def profile_activity(user: User, data: DateRangeSchema) -> dict[str, object]:
-    payload = empty_activity_payload(user, data)
+def compute_dashboard(
+    user: User,
+    period: str,
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> dict[str, object]:
+    lo, hi = _period_bounds(period, start_date, end_date)
+    payload: dict[str, object] = empty_dashboard_payload(
+        user, period, start_date, end_date
+    )
 
-    total, count = _period_totals(user.id, data.start_date, data.end_date)
+    total, count = _period_totals(user.id, lo, hi)
     if count == 0:
         return payload
 
+    total_q = total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    avg_q = (total / count).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    busiest = _busiest_day(user.id, lo, hi)
+    recent = (
+        list_expenses_in_range(user.id, lo, hi)
+        if period == "custom"
+        else _recent_expenses(user.id, lo, hi)
+    )
+
     payload.update(
-        activity_expenses=list_expenses_in_range(
-            user.id, data.start_date, data.end_date
-        ),
-        activity_total=total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
-        activity_count=count,
+        total_amount=total_q,
+        expense_count=count,
+        average_amount=avg_q,
+        median_amount=_median_amount(user.id, lo, hi),
+        busiest_day_date=busiest[0] if busiest else None,
+        busiest_day_count=busiest[1] if busiest else 0,
+        category_breakdown=_category_breakdown(user.id, lo, hi, total),
+        recent_expenses=recent,
+        daily_series=_daily_series(user.id, lo, hi),
     )
     return payload
 
