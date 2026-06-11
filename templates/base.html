@@ -40,6 +40,8 @@
 </head>
 <body>
 
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <nav class="navbar">
         <div class="nav-inner">
             <a href="{{ url_for('landing') }}" class="nav-brand">
@@ -49,20 +51,24 @@
             <div class="nav-links">
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('dashboard') }}"
-                       class="{% if request.endpoint == 'dashboard' %}is-active{% endif %}">Dashboard</a>
+                       class="{% if request.endpoint == 'dashboard' %}is-active{% endif %}"
+                       {% if request.endpoint == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
                     <a href="{{ url_for('expenses_list') }}"
-                       class="{% if request.endpoint in ('expenses_list', 'add_expense', 'add_expense_post', 'edit_expense', 'edit_expense_post', 'delete_expense') %}is-active{% endif %}">Expenses</a>
+                       class="{% if request.endpoint in ('expenses_list', 'add_expense', 'add_expense_post', 'edit_expense', 'edit_expense_post', 'delete_expense') %}is-active{% endif %}"
+                       {% if request.endpoint in ('expenses_list', 'add_expense', 'add_expense_post', 'edit_expense', 'edit_expense_post', 'delete_expense') %}aria-current="page"{% endif %}>Expenses</a>
                     <a href="{{ url_for('profile') }}"
-                       class="{% if request.endpoint in ('profile', 'profile_update', 'change_password_route') %}is-active{% endif %}">Profile</a>
+                       class="{% if request.endpoint in ('profile', 'profile_update', 'change_password_route') %}is-active{% endif %}"
+                       {% if request.endpoint in ('profile', 'profile_update', 'change_password_route') %}aria-current="page"{% endif %}>Profile</a>
                     <a href="{{ url_for('analytics') }}"
-                       class="{% if request.endpoint == 'analytics' %}is-active{% endif %}">Analytics</a>
+                       class="{% if request.endpoint == 'analytics' %}is-active{% endif %}"
+                       {% if request.endpoint == 'analytics' %}aria-current="page"{% endif %}>Analytics</a>
                     <span class="nav-user">
                         <i data-lucide="user-circle" class="icon-xs"></i>
                         {{ current_user.name }}
                     </span>
                     <form method="POST" action="{{ url_for('logout') }}" class="nav-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="nav-cta nav-cta--button">
+                        <button type="submit" class="nav-cta nav-cta--button" aria-label="Sign out">
                             <i data-lucide="log-out" class="icon-xs"></i>
                             Sign out
                         </button>
@@ -90,7 +96,7 @@
         {% endif %}
     {% endwith %}
 
-    <main class="main-content">
+    <main class="main-content" id="main-content">
         {% block content %}{% endblock %}
     </main>
 

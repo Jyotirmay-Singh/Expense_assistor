@@ -18,6 +18,7 @@
       <button type="button"
               class="exp-btn-edit"
               title="Edit"
+              aria-label="Edit expense"
               hx-get="{{ url_for('edit_expense', id=exp.id) }}"
               hx-target="closest tr"
               hx-swap="outerHTML">
@@ -29,6 +30,7 @@
         <button type="button"
                 class="exp-btn-danger"
                 title="Delete"
+                aria-label="Delete expense"
                 @click="open = true"
                 x-show="!open">
           <i data-lucide="trash-2" class="icon-xs"></i>
