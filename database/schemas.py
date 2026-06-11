@@ -1,5 +1,5 @@
 from datetime import date
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from typing import Literal
 
 from email_validator import EmailNotValidError, validate_email
@@ -19,6 +19,8 @@ ALLOWED_CURRENCIES: tuple[str, ...] = (
     "SGD",
     "USD",
 )
+
+ALLOWED_AVATAR_EXTENSIONS: tuple[str, ...] = ("png", "jpg", "jpeg", "webp")
 
 
 class RegisterSchema(BaseModel):
@@ -159,6 +161,10 @@ class ChangePasswordSchema(BaseModel):
     def passwords_match(self) -> "ChangePasswordSchema":
         if self.new_password != self.confirm_password:
             raise ValueError("New password and confirmation do not match.")
+        if self.new_password == self.current_password:
+            raise ValueError(
+                "New password must be different from your current password."
+            )
         return self
 
 
@@ -205,7 +211,7 @@ class DateRangeSchema(BaseModel):
 
 class ExpenseSchema(BaseModel):
     title: str
-    amount: Decimal
+    amount: int
     category: str
     date: date
     notes: str | None = None
@@ -222,16 +228,18 @@ class ExpenseSchema(BaseModel):
 
     @field_validator("amount", mode="before")
     @classmethod
-    def validate_amount(cls, v: object) -> Decimal:
+    def validate_amount(cls, v: object) -> int:
         try:
             d = Decimal(str(v).strip())
         except Exception:
             raise ValueError("Enter a valid amount.")
         if d <= 0:
             raise ValueError("Amount must be greater than zero.")
-        if d > Decimal("9999999.99"):
+        if d != d.to_integral_value():
+            raise ValueError("Amount must be a whole number.")
+        if d > Decimal("9999999"):
             raise ValueError("Amount is too large.")
-        return d.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        return int(d)
 
     @field_validator("category")
     @classmethod

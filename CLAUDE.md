@@ -121,5 +121,5 @@ pytest -k "test_register"
 - **Never install new packages mid-feature without flagging it** — keep `requirements.txt` in sync.
 - **Never use heavy JS frameworks** — server-rendered HTML + vanilla JS / HTMX is the model.
 - **Never instantiate a global DB Session or Engine** — use `db.session` from `flask_sqlalchemy` inside the app context or a request.
-- **Never store currency as floats** — always use `Numeric(10, 2)` in models and `decimal.Decimal` in Python.
+- **Never store currency as floats** — amounts represent whole currency units (no fractional sub-units): use `Integer` in models and `int` in Python, validated as positive whole numbers in `ExpenseSchema`.
 - **Never use SQLite, not even for local dev** — point `DATABASE_URL` at the Dockerised Postgres.

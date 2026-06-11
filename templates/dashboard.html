@@ -68,7 +68,7 @@
         <i data-lucide="credit-card" style="color:var(--accent);width:20px;height:20px;"></i>
       </div>
       <p class="db-kpi-label">Total spent</p>
-      <p class="db-kpi-value">{{ "{:,.2f}".format(total_amount) }}</p>
+      <p class="db-kpi-value">{{ "{:,}".format(total_amount) }}</p>
       <p class="db-kpi-currency">{{ currency }}</p>
     </div>
 
@@ -86,7 +86,7 @@
         <i data-lucide="trending-up" style="color:var(--accent-2);width:20px;height:20px;"></i>
       </div>
       <p class="db-kpi-label">Avg per expense</p>
-      <p class="db-kpi-value">{{ "{:,.2f}".format(average_amount) }}</p>
+      <p class="db-kpi-value">{{ "{:,}".format(average_amount) }}</p>
       <p class="db-kpi-currency">{{ currency }}</p>
     </div>
 
@@ -96,7 +96,7 @@
       </div>
       <p class="db-kpi-label">Median expense</p>
       {% if median_amount is not none %}
-      <p class="db-kpi-value">{{ "{:,.2f}".format(median_amount) }}</p>
+      <p class="db-kpi-value">{{ "{:,}".format(median_amount) }}</p>
       <p class="db-kpi-currency">{{ currency }}</p>
       {% else %}
       <p class="db-kpi-value">—</p>
@@ -139,8 +139,8 @@
           <li class="db-legend-row">
             <span class="db-legend-dot cat-{{ row.category|lower }}"></span>
             <span class="db-legend-cat">{{ row.category }}</span>
-            <span class="db-legend-amt">{{ "{:,.0f}".format(row.total) }}</span>
-            <span class="db-legend-pct">{{ "{:.0f}".format(row.percent) }}%</span>
+            <span class="db-legend-amt">{{ "{:,}".format(row.total) }}</span>
+            <span class="db-legend-pct">{{ row.percent }}%</span>
           </li>
           {% endfor %}
         </ul>
@@ -187,8 +187,8 @@
                style="width:{{ row.percent }}%;"></div>
         </div>
         <div class="db-breakdown-right">
-          <span class="db-breakdown-amt">{{ "{:,.2f}".format(row.total) }}</span>
-          <span class="db-breakdown-pct">{{ "{:.1f}".format(row.percent) }}%</span>
+          <span class="db-breakdown-amt">{{ "{:,}".format(row.total) }}</span>
+          <span class="db-breakdown-pct">{{ row.percent }}%</span>
         </div>
       </div>
       {% endfor %}
@@ -233,7 +233,7 @@
               </span>
             </td>
             <td class="db-td-amt">
-              {{ "{:,.2f}".format(exp.amount) }}
+              {{ "{:,}".format(exp.amount) }}
               <span class="db-td-ccy">{{ currency }}</span>
             </td>
           </tr>
@@ -283,7 +283,7 @@
   const donutEl = document.getElementById('donutChart');
   if (donutEl) {
     const dLabels = [{% for r in category_breakdown %}"{{ r.category }}"{% if not loop.last %},{% endif %}{% endfor %}];
-    const dData   = [{% for r in category_breakdown %}{{ r.total | float }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const dData   = [{% for r in category_breakdown %}{{ r.total }}{% if not loop.last %},{% endif %}{% endfor %}];
     const dColors = dLabels.map(catColor);
 
     new Chart(donutEl, {
@@ -306,7 +306,7 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: c => ` ${c.label}: ₹${c.parsed.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+              label: c => ` ${c.label}: ₹${c.parsed.toLocaleString('en-IN')}`,
             },
           },
         },
@@ -320,7 +320,7 @@
   const trendEl = document.getElementById('trendChart');
   if (trendEl) {
     const tLabels = [{% for r in daily_series %}"{{ r.date.strftime('%d %b') }}"{% if not loop.last %},{% endif %}{% endfor %}];
-    const tData   = [{% for r in daily_series %}{{ r.total | float }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const tData   = [{% for r in daily_series %}{{ r.total }}{% if not loop.last %},{% endif %}{% endfor %}];
 
     new Chart(trendEl, {
       type: 'line',
@@ -347,7 +347,7 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: c => ` ₹${c.parsed.y.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+              label: c => ` ₹${c.parsed.y.toLocaleString('en-IN')}`,
             },
           },
         },

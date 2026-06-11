@@ -18,9 +18,12 @@ from markupsafe import Markup
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.utils import secure_filename
 
 from database.db import CATEGORIES, User, csrf, db, login_manager, migrate, seed_db
 from database.schemas import (
+    ALLOWED_AVATAR_EXTENSIONS,
     ALLOWED_CURRENCIES,
     DASHBOARD_PERIODS,
     ChangePasswordSchema,
@@ -34,6 +37,7 @@ from database.schemas import (
 )
 from database.services import (
     UNDO_WINDOW_SECONDS,
+    PasswordChangeResult,
     change_password,
     compute_dashboard,
     create_expense,
@@ -41,10 +45,14 @@ from database.services import (
     empty_dashboard_payload,
     get_expense_for_user,
     list_user_expenses,
+    remove_avatar,
     restore_expense as restore_expense_service,
+    update_avatar,
     update_expense,
     update_profile,
 )
+
+MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024
 
 
 def create_app() -> Flask:
@@ -64,6 +72,8 @@ def create_app() -> Flask:
         REMEMBER_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
+        UPLOAD_FOLDER=os.path.join(app.static_folder, "uploads", "avatars"),
+        MAX_CONTENT_LENGTH=MAX_AVATAR_SIZE_BYTES,
     )
 
     db.init_app(app)
@@ -74,6 +84,11 @@ def create_app() -> Flask:
     @app.template_filter("strftime")
     def _strftime_filter(value: datetime | None, fmt: str = "%B %d, %Y") -> str:
         return value.strftime(fmt) if value else ""
+
+    @app.errorhandler(RequestEntityTooLarge)
+    def _handle_file_too_large(exc: RequestEntityTooLarge) -> ResponseReturnValue:
+        flash("Image is too large (max 2MB).", "error")
+        return redirect(url_for("profile"))
 
     _register_auth_routes(app)
     _register_main_routes(app)
@@ -259,6 +274,8 @@ def _register_main_routes(app: Flask) -> None:
 
     @app.route("/")
     def landing() -> ResponseReturnValue:
+        if current_user.is_authenticated:
+            return redirect(url_for("dashboard"))
         return render_template("landing.html")
 
     @app.route("/dashboard")
@@ -334,6 +351,63 @@ def _register_main_routes(app: Flask) -> None:
 
         return redirect(url_for("profile"))
 
+    @app.route("/profile/avatar", methods=["POST"])
+    @login_required
+    def profile_avatar_upload() -> ResponseReturnValue:
+        file = request.files.get("avatar")
+        if file is None or not file.filename:
+            flash("Please choose an image to upload.", "error")
+            return redirect(url_for("profile"))
+
+        ext = secure_filename(file.filename).rsplit(".", 1)[-1].lower()
+        if "." not in file.filename or ext not in ALLOWED_AVATAR_EXTENSIONS:
+            flash("Please upload a PNG, JPG, or WEBP image.", "error")
+            return redirect(url_for("profile"))
+
+        filename = f"user_{current_user.id}.{ext}"
+        upload_folder = current_app.config["UPLOAD_FOLDER"]
+
+        old_filename = current_user.avatar_filename
+        if old_filename and old_filename != filename:
+            try:
+                os.remove(os.path.join(upload_folder, old_filename))
+            except FileNotFoundError:
+                pass
+
+        try:
+            file.save(os.path.join(upload_folder, filename))
+            update_avatar(current_user, filename)
+            flash("Profile picture updated.", "success")
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error updating avatar: %s", exc)
+            flash("A database error occurred. Please try again.", "error")
+        except Exception as exc:  # noqa: BLE001
+            current_app.logger.error("Unexpected avatar upload error: %s", exc)
+            flash("An unexpected error occurred. Please try again.", "error")
+
+        return redirect(url_for("profile"))
+
+    @app.route("/profile/avatar/remove", methods=["POST"])
+    @login_required
+    def profile_avatar_remove() -> ResponseReturnValue:
+        try:
+            old_filename = remove_avatar(current_user)
+            if old_filename:
+                try:
+                    os.remove(
+                        os.path.join(current_app.config["UPLOAD_FOLDER"], old_filename)
+                    )
+                except FileNotFoundError:
+                    pass
+            flash("Profile picture removed.", "success")
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error removing avatar: %s", exc)
+            flash("A database error occurred. Please try again.", "error")
+
+        return redirect(url_for("profile"))
+
     @app.route("/profile/change-password", methods=["POST"])
     @login_required
     def change_password_route() -> ResponseReturnValue:
@@ -353,9 +427,14 @@ def _register_main_routes(app: Flask) -> None:
             return redirect(url_for("profile"))
 
         try:
-            ok = change_password(current_user, data)
-            if not ok:
+            result = change_password(current_user, data)
+            if result is PasswordChangeResult.WRONG_CURRENT_PASSWORD:
                 flash("Current password is incorrect.", "error")
+            elif result is PasswordChangeResult.PASSWORD_REUSED:
+                flash(
+                    "You cannot reuse a previous password. Please choose a new one.",
+                    "error",
+                )
             else:
                 flash("Password updated.", "success")
         except SQLAlchemyError as exc:

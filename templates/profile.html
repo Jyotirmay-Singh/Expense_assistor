@@ -13,11 +13,50 @@
             <aside class="profile-rail">
 
                 <header class="profile-header">
-                    <div class="avatar-circle">
-                        <span class="avatar-initials">{{ initials }}</span>
-                    </div>
+                    {% if user.avatar_filename %}
+                        <img src="{{ url_for('static', filename='uploads/avatars/' + user.avatar_filename) }}"
+                             class="avatar-circle avatar-img" alt="Profile picture">
+                    {% else %}
+                        <div class="avatar-circle">
+                            <span class="avatar-initials">{{ initials }}</span>
+                        </div>
+                    {% endif %}
                     <h1 class="profile-name">{{ user.display_name }}</h1>
                     <p class="profile-email">{{ user.email }}</p>
+
+                    <div class="avatar-actions">
+                        <form method="POST" action="{{ url_for('profile_avatar_upload') }}"
+                              enctype="multipart/form-data" class="avatar-upload-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <label for="avatar" class="btn-ghost-sm">
+                                <i data-lucide="image-up" class="icon-xs"></i>
+                                Change photo
+                            </label>
+                            <input type="file" id="avatar" name="avatar"
+                                   accept="image/png,image/jpeg,image/webp"
+                                   class="sr-only"
+                                   onchange="this.form.submit()">
+                        </form>
+
+                        {% if user.avatar_filename %}
+                        <span x-data="{ open: false }">
+                            <button type="button" class="btn-ghost-sm btn-ghost-danger"
+                                    @click="open = true" x-show="!open">
+                                <i data-lucide="trash-2" class="icon-xs"></i>
+                                Remove photo
+                            </button>
+                            <span x-show="open" x-cloak class="exp-confirm-inline">
+                                <span class="exp-confirm-text">Remove?</span>
+                                <form method="POST" action="{{ url_for('profile_avatar_remove') }}"
+                                      style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="exp-confirm-yes">Yes</button>
+                                </form>
+                                <button type="button" class="exp-confirm-no" @click="open = false">No</button>
+                            </span>
+                        </span>
+                        {% endif %}
+                    </div>
                 </header>
 
                 <article class="profile-card" data-aos="fade-up" data-aos-delay="50">

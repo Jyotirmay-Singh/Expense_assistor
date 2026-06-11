@@ -8,3 +8,7 @@ __pycache__/
 .env
 .DS_Store
 .claude/plans/
+
+# User-uploaded files
+static/uploads/avatars/*
+!static/uploads/avatars/.gitkeep

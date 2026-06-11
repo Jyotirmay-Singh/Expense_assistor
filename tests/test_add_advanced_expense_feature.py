@@ -5,7 +5,7 @@ Coverage:
   - Auth & Access Control (unauthenticated redirect on all protected routes)
   - Happy Paths (list, add, edit, delete with valid data)
   - Database State (persistence, update, deletion verified directly)
-  - Decimal Discipline (amount stored and retrieved as Decimal, not float)
+  - Integer Discipline (amount stored and retrieved as int, not float)
   - Input Validation (amount ≤ 0, blank title, field preservation on error)
   - Edge Cases (empty state for new user, GET on POST-only delete route)
   - CSRF Protection (POST without token returns 400)
@@ -27,7 +27,6 @@ Coverage:
 
 import pytest
 from datetime import date
-from decimal import Decimal
 
 from flask import url_for
 from sqlalchemy import select
@@ -46,7 +45,7 @@ def _valid_expense_form(**overrides: object) -> dict[str, str]:
     """Return a valid expense form payload; individual fields may be overridden."""
     base: dict[str, str] = {
         "title": "Lunch",
-        "amount": "250.50",
+        "amount": "250",
         "category": "Food",
         "date": _today_iso(),
         "notes": "",
@@ -246,7 +245,7 @@ def test_add_expense_valid_post_persists_new_row_in_database(
         post_url = url_for("add_expense_post")
 
     payload = _valid_expense_form(
-        title="DB Persist Test", amount="99.99", category="Food"
+        title="DB Persist Test", amount="100", category="Food"
     )
     auth_client.post(post_url, data=payload, follow_redirects=False)
 
@@ -263,7 +262,7 @@ def test_add_expense_valid_post_persists_new_row_in_database(
             assert expense is not None, "Expense row was not inserted"
             assert expense.title == "DB Persist Test"
             assert expense.category == "Food"
-            assert expense.amount == Decimal("99.99")
+            assert expense.amount == 100
         finally:
             if expense is not None:
                 _db.session.delete(expense)
@@ -280,7 +279,7 @@ def test_add_expense_valid_post_new_expense_appears_at_top_of_list(
 
     # Use today's date so it sorts before the May 2026 seed data
     payload = _valid_expense_form(
-        title="Top Of List Expense", amount="1.00", category="Other"
+        title="Top Of List Expense", amount="1", category="Other"
     )
     auth_client.post(post_url, data=payload, follow_redirects=False)
 
@@ -338,7 +337,7 @@ def test_edit_expense_post_valid_data_updates_record(
 
     updated_payload = _valid_expense_form(
         title="Updated Groceries",
-        amount="2000.00",
+        amount="2000",
         category="Food",
         date="2026-05-03",
     )
@@ -351,10 +350,10 @@ def test_edit_expense_post_valid_data_updates_record(
         refreshed = _db.session.get(Expense, expense.id)
         assert refreshed is not None
         assert refreshed.title == "Updated Groceries"
-        assert refreshed.amount == Decimal("2000.00")
+        assert refreshed.amount == 2000
         # Restore original values for other tests
         refreshed.title = "Groceries"
-        refreshed.amount = Decimal("1850.50")
+        refreshed.amount = 1851
         _db.session.commit()
 
 
@@ -368,7 +367,7 @@ def test_edit_expense_post_valid_data_redirects_to_expenses_list(
         list_url = url_for("expenses_list")
 
     payload = _valid_expense_form(
-        title="Metro pass", amount="500.00", category="Transport", date="2026-05-05"
+        title="Metro pass", amount="500", category="Transport", date="2026-05-05"
     )
     response = auth_client.post(post_url, data=payload, follow_redirects=False)
     assert response.status_code == 302
@@ -388,7 +387,7 @@ def test_delete_expense_owned_deletes_row_and_redirects(
         victim = Expense(
             user_id=demo_user.id,
             title="Delete Me",
-            amount=Decimal("10.00"),
+            amount=10,
             category="Other",
             date=date(2026, 5, 20),
         )
@@ -426,7 +425,7 @@ def test_delete_expense_owned_no_longer_appears_in_list(auth_client, app, demo_u
         victim = Expense(
             user_id=demo_user.id,
             title="GoneExpense",
-            amount=Decimal("5.00"),
+            amount=5,
             category="Other",
             date=date(2026, 5, 21),
         )
@@ -625,7 +624,7 @@ def test_edit_expense_post_without_csrf_token_returns_400(
             response = csrf_client.post(
                 post_url,
                 data=_valid_expense_form(
-                    title="Electricity bill", amount="2200.00", category="Bills"
+                    title="Electricity bill", amount="2200", category="Bills"
                 ),
                 follow_redirects=False,
             )
@@ -688,12 +687,12 @@ def test_delete_expense_get_method_returns_405(auth_client, app, demo_expenses):
 
 
 def test_add_expense_amount_too_large_rerenders_form_with_error(auth_client, app):
-    # Spec §Schemas — amount must be ≤ 9_999_999.99; exceeding it → form re-render with error
+    # Spec §Schemas — amount must be ≤ 9_999_999; exceeding it → form re-render with error
     with app.app_context():
         post_url = url_for("add_expense_post")
     response = auth_client.post(
         post_url,
-        data=_valid_expense_form(amount="99999999.99"),
+        data=_valid_expense_form(amount="99999999"),
         follow_redirects=False,
     )
     assert response.status_code == 200
@@ -704,13 +703,13 @@ def test_add_expense_amount_too_large_rerenders_form_with_error(auth_client, app
 # ── Database State ─────────────────────────────────────────────────────────────
 
 
-def test_add_expense_persists_exact_decimal_amount(auth_client, app, demo_user):
-    # Spec §Rules — amount stored as Decimal, never float; two decimal places
+def test_add_expense_persists_exact_integer_amount(auth_client, app, demo_user):
+    # Spec §Rules — amount stored as a whole integer, never float
     with app.app_context():
         post_url = url_for("add_expense_post")
 
     payload = _valid_expense_form(
-        title="Decimal Test", amount="333.33", category="Education"
+        title="Integer Test", amount="333", category="Education"
     )
     auth_client.post(post_url, data=payload, follow_redirects=False)
 
@@ -720,31 +719,29 @@ def test_add_expense_persists_exact_decimal_amount(auth_client, app, demo_user):
         expense = _db.session.execute(
             select(Expense).where(
                 Expense.user_id == demo_user.id,
-                Expense.title == "Decimal Test",
+                Expense.title == "Integer Test",
             )
         ).scalar_one_or_none()
         try:
             assert expense is not None
-            assert isinstance(expense.amount, Decimal), (
-                f"Expected Decimal, got {type(expense.amount)}"
+            assert isinstance(expense.amount, int), (
+                f"Expected int, got {type(expense.amount)}"
             )
-            assert expense.amount == Decimal("333.33")
-            # Verify two decimal places exactly
-            assert expense.amount == expense.amount.quantize(Decimal("0.01"))
+            assert expense.amount == 333
         finally:
             if expense is not None:
                 _db.session.delete(expense)
                 _db.session.commit()
 
 
-def test_edit_expense_persists_updated_decimal_amount(auth_client, app, demo_expenses):
-    # Spec §Rules — updated amount stored as Decimal after edit
-    expense = demo_expenses[3]  # Doctor visit, 700.00, Health
+def test_edit_expense_persists_updated_integer_amount(auth_client, app, demo_expenses):
+    # Spec §Rules — updated amount stored as a whole integer after edit
+    expense = demo_expenses[3]  # Doctor visit, 700, Health
     with app.app_context():
         post_url = url_for("edit_expense_post", id=expense.id)
 
     payload = _valid_expense_form(
-        title="Doctor visit", amount="750.25", category="Health", date="2026-05-08"
+        title="Doctor visit", amount="750", category="Health", date="2026-05-08"
     )
     auth_client.post(post_url, data=payload, follow_redirects=False)
 
@@ -753,55 +750,53 @@ def test_edit_expense_persists_updated_decimal_amount(auth_client, app, demo_exp
 
         refreshed = _db.session.get(Expense, expense.id)
         assert refreshed is not None
-        assert isinstance(refreshed.amount, Decimal), (
-            f"Expected Decimal after update, got {type(refreshed.amount)}"
+        assert isinstance(refreshed.amount, int), (
+            f"Expected int after update, got {type(refreshed.amount)}"
         )
-        assert refreshed.amount == Decimal("750.25")
+        assert refreshed.amount == 750
         # Restore
-        refreshed.amount = Decimal("700.00")
+        refreshed.amount = 700
         _db.session.commit()
 
 
-def test_expenses_list_shows_amounts_with_two_decimal_places(
-    auth_client, app, demo_expenses
-):
-    # Spec §Templates — amount formatted as "{:,.2f}" — always two decimal places
+def test_expenses_list_shows_amounts_as_whole_numbers(auth_client, app, demo_expenses):
+    # Spec §Templates — amount formatted as "{:,}" — comma-grouped whole number, no decimals
     with app.app_context():
         url = url_for("expenses_list")
     response = auth_client.get(url)
     html = response.data.decode()
-    # Seed data has "2,200.00" (Electricity bill) — verify comma-formatted two-decimal display
-    assert "2,200.00" in html or "2200.00" in html
-    # Groceries 1850.50 — must show exactly two decimal places
-    assert "1,850.50" in html or "1850.50" in html
+    # Seed data has 2,200 (Electricity bill) — verify comma-formatted whole-number display
+    assert "2,200" in html or "2200" in html
+    # Groceries 1851 — must show as a whole number
+    assert "1,851" in html or "1851" in html
 
 
-# ── Decimal Discipline ─────────────────────────────────────────────────────────
+# ── Integer Discipline ─────────────────────────────────────────────────────────
 
 
-def test_expense_amount_stored_as_decimal_not_float(auth_client, app, demo_expenses):
-    # Spec §Rules — Decimal discipline: amount on retrieved Expense object is Decimal, not float
+def test_expense_amount_stored_as_int(auth_client, app, demo_expenses):
+    # Spec §Rules — integer discipline: amount on retrieved Expense object is int, not float
     with app.app_context():
         from database.db import db as _db
 
         expense = _db.session.get(Expense, demo_expenses[0].id)
         assert expense is not None
-        assert isinstance(expense.amount, Decimal), (
-            f"Expense.amount must be Decimal, got {type(expense.amount).__name__}"
+        assert isinstance(expense.amount, int), (
+            f"Expense.amount must be int, got {type(expense.amount).__name__}"
         )
         assert not isinstance(expense.amount, float)
 
 
-def test_all_seed_expense_amounts_are_decimal_not_float(app, demo_expenses):
-    # Spec §Rules — every seeded expense amount is Decimal, validating Numeric(10,2) mapping
+def test_all_seed_expense_amounts_are_int(app, demo_expenses):
+    # Spec §Rules — every seeded expense amount is int, validating Integer mapping
     with app.app_context():
         from database.db import db as _db
 
         for seed_exp in demo_expenses:
             refreshed = _db.session.get(Expense, seed_exp.id)
             assert refreshed is not None
-            assert isinstance(refreshed.amount, Decimal), (
-                f"Expense '{refreshed.title}' has amount type {type(refreshed.amount).__name__}, expected Decimal"
+            assert isinstance(refreshed.amount, int), (
+                f"Expense '{refreshed.title}' has amount type {type(refreshed.amount).__name__}, expected int"
             )
 
 
@@ -923,7 +918,7 @@ def test_dashboard_totals_correct_after_adding_expense(
 
     payload = _valid_expense_form(
         title="Regression Add Test",
-        amount="100.00",
+        amount="100",
         category="Other",
         date="2026-05-16",
     )
@@ -962,7 +957,7 @@ def test_dashboard_totals_correct_after_editing_expense(
 
     # Edit to a new amount
     payload = _valid_expense_form(
-        title="Netflix", amount="699.00", category="Entertainment", date="2026-05-10"
+        title="Netflix", amount="699", category="Entertainment", date="2026-05-10"
     )
     auth_client.post(edit_url, data=payload, follow_redirects=False)
 
@@ -975,7 +970,7 @@ def test_dashboard_totals_correct_after_editing_expense(
 
         refreshed = _db.session.get(Expense, expense.id)
         if refreshed is not None:
-            refreshed.amount = Decimal("649.00")
+            refreshed.amount = 649
             _db.session.commit()
 
 
@@ -988,7 +983,7 @@ def test_dashboard_totals_correct_after_deleting_expense(auth_client, app, demo_
         temp = Expense(
             user_id=demo_user.id,
             title="Regression Delete Test",
-            amount=Decimal("50.00"),
+            amount=50,
             category="Other",
             date=date(2026, 5, 22),
         )
@@ -1026,7 +1021,7 @@ def test_profile_activity_correct_after_expense_edit(auth_client, app, demo_expe
         profile_url = url_for("profile")
 
     payload = _valid_expense_form(
-        title="Python books", amount="900.00", category="Education", date="2026-05-12"
+        title="Python books", amount="900", category="Education", date="2026-05-12"
     )
     auth_client.post(edit_url, data=payload, follow_redirects=False)
 
@@ -1041,5 +1036,5 @@ def test_profile_activity_correct_after_expense_edit(auth_client, app, demo_expe
 
         refreshed = _db.session.get(Expense, expense.id)
         if refreshed is not None:
-            refreshed.amount = Decimal("850.00")
+            refreshed.amount = 850
             _db.session.commit()

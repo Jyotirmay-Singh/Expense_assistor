@@ -9,7 +9,6 @@ tests remain independent and do not pollute production seed data.
 
 import os
 from datetime import date, datetime, timezone
-from decimal import Decimal
 
 import pytest
 from sqlalchemy import select
@@ -25,7 +24,6 @@ if _PROJECT_ROOT not in sys.path:
 
 from app import create_app  # noqa: E402 — must come after sys.path fix
 from database.db import Expense, User, db as _db  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # App fixture
@@ -147,49 +145,49 @@ def demo_expenses(app, db_session, demo_user):
     seed_rows = [
         dict(
             title="Electricity bill",
-            amount=Decimal("2200.00"),
+            amount=2200,
             category="Bills",
             date=date(2026, 5, 1),
         ),
         dict(
             title="Groceries",
-            amount=Decimal("1850.50"),
+            amount=1851,
             category="Food",
             date=date(2026, 5, 3),
         ),
         dict(
             title="Metro pass",
-            amount=Decimal("500.00"),
+            amount=500,
             category="Transport",
             date=date(2026, 5, 5),
         ),
         dict(
             title="Doctor visit",
-            amount=Decimal("700.00"),
+            amount=700,
             category="Health",
             date=date(2026, 5, 8),
         ),
         dict(
             title="Netflix",
-            amount=Decimal("649.00"),
+            amount=649,
             category="Entertainment",
             date=date(2026, 5, 10),
         ),
         dict(
             title="Python books",
-            amount=Decimal("850.00"),
+            amount=850,
             category="Education",
             date=date(2026, 5, 12),
         ),
         dict(
             title="Shirt",
-            amount=Decimal("1200.00"),
+            amount=1200,
             category="Shopping",
             date=date(2026, 5, 14),
         ),
         dict(
             title="Water bill",
-            amount=Decimal("350.00"),
+            amount=350,
             category="Bills",
             date=date(2026, 5, 15),
         ),
@@ -293,7 +291,7 @@ def second_user_with_expense(app, db_session, second_user):
     exp = Expense(
         user_id=second_user.id,
         title="Second user only expense",
-        amount=Decimal("99.99"),
+        amount=100,
         category="Other",
         date=date(2026, 5, 7),
     )

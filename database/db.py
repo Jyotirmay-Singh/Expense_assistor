@@ -1,5 +1,4 @@
 from datetime import datetime, date, timezone
-from decimal import Decimal
 from typing import Optional
 
 from flask import Flask
@@ -13,7 +12,6 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
-    Numeric,
     String,
     Text,
     select,
@@ -66,6 +64,7 @@ class User(UserMixin, db.Model):
     default_currency: Mapped[str] = mapped_column(
         String(3), nullable=False, server_default="INR"
     )
+    avatar_filename: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     terms_accepted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -82,6 +81,13 @@ class User(UserMixin, db.Model):
         lazy="select",
     )
 
+    password_history: Mapped[list["PasswordHistory"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="select",
+        order_by="(PasswordHistory.created_at.desc(), PasswordHistory.id.desc())",
+    )
+
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
 
@@ -90,6 +96,26 @@ class User(UserMixin, db.Model):
 
     def __repr__(self) -> str:
         return f"<User {self.email!r}>"
+
+
+class PasswordHistory(db.Model):
+    __tablename__ = "password_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
+
+    user: Mapped["User"] = relationship(back_populates="password_history")
+
+    def __repr__(self) -> str:
+        return f"<PasswordHistory user_id={self.user_id}>"
 
 
 class Expense(db.Model):
@@ -102,7 +128,7 @@ class Expense(db.Model):
         index=True,
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
-    amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
     category: Mapped[str] = mapped_column(String(50), nullable=False)
     date: Mapped[date] = mapped_column(
         Date, nullable=False, default=date.today, index=True
@@ -172,56 +198,56 @@ def seed_db(app: Flask) -> None:
             Expense(
                 user_id=demo.id,
                 title="Electricity bill",
-                amount=Decimal("2200.00"),
+                amount=2200,
                 category="Bills",
                 date=date(2026, 5, 1),
             ),
             Expense(
                 user_id=demo.id,
                 title="Groceries",
-                amount=Decimal("1850.50"),
+                amount=1851,
                 category="Food",
                 date=date(2026, 5, 3),
             ),
             Expense(
                 user_id=demo.id,
                 title="Metro pass",
-                amount=Decimal("500.00"),
+                amount=500,
                 category="Transport",
                 date=date(2026, 5, 5),
             ),
             Expense(
                 user_id=demo.id,
                 title="Doctor visit",
-                amount=Decimal("700.00"),
+                amount=700,
                 category="Health",
                 date=date(2026, 5, 8),
             ),
             Expense(
                 user_id=demo.id,
                 title="Netflix",
-                amount=Decimal("649.00"),
+                amount=649,
                 category="Entertainment",
                 date=date(2026, 5, 10),
             ),
             Expense(
                 user_id=demo.id,
                 title="Python books",
-                amount=Decimal("850.00"),
+                amount=850,
                 category="Education",
                 date=date(2026, 5, 12),
             ),
             Expense(
                 user_id=demo.id,
                 title="Shirt",
-                amount=Decimal("1200.00"),
+                amount=1200,
                 category="Shopping",
                 date=date(2026, 5, 14),
             ),
             Expense(
                 user_id=demo.id,
                 title="Water bill",
-                amount=Decimal("350.00"),
+                amount=350,
                 category="Bills",
                 date=date(2026, 5, 15),
             ),
