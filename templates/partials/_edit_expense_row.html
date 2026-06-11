@@ -23,6 +23,7 @@
              value="{{ form_data.title }}"
              maxlength="200"
              placeholder="Description"
+             aria-label="Description"
              required
              autocomplete="off">
 
@@ -33,10 +34,12 @@
              min="0.01"
              step="0.01"
              placeholder="0.00"
+             aria-label="Amount"
              required>
 
       <select name="category"
               class="form-select exp-inline-select"
+              aria-label="Category"
               required>
         <option value="" disabled {% if not form_data.category %}selected{% endif %}>
           Category
@@ -53,6 +56,7 @@
              name="date"
              class="form-input exp-inline-input"
              value="{{ form_data.date }}"
+             aria-label="Date"
              required>
 
       <input type="text"
@@ -60,7 +64,8 @@
              class="form-input exp-inline-input"
              value="{{ form_data.notes }}"
              maxlength="1000"
-             placeholder="Notes (optional)">
+             placeholder="Notes (optional)"
+             aria-label="Notes">
 
       <div class="exp-inline-actions">
         <button type="submit" class="exp-inline-save">Save</button>

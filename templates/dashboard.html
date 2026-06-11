@@ -49,8 +49,8 @@
     </div>
 
     <div class="db-kpi-card">
-      <div class="db-kpi-icon" style="background:#e8f0eb;">
-        <i data-lucide="receipt" style="color:#2e7d32;width:20px;height:20px;"></i>
+      <div class="db-kpi-icon" style="background:var(--accent-3-light);">
+        <i data-lucide="receipt" style="color:var(--accent-3);width:20px;height:20px;"></i>
       </div>
       <p class="db-kpi-label">Transactions</p>
       <p class="db-kpi-value">{{ expense_count }}</p>
@@ -164,10 +164,10 @@
       <table class="db-table">
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th class="db-th-num">Amount</th>
+            <th scope="col">Date</th>
+            <th scope="col">Description</th>
+            <th scope="col">Category</th>
+            <th scope="col" class="db-th-num">Amount</th>
           </tr>
         </thead>
         <tbody>
