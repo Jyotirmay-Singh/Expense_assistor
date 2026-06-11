@@ -13,6 +13,8 @@ from flask import (
 )
 from flask.typing import ResponseReturnValue
 from flask_login import current_user, login_required, login_user, logout_user
+from flask_wtf.csrf import generate_csrf
+from markupsafe import Markup
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -31,6 +33,7 @@ from database.schemas import (
     extract_messages,
 )
 from database.services import (
+    UNDO_WINDOW_SECONDS,
     change_password,
     compute_dashboard,
     create_expense,
@@ -40,6 +43,7 @@ from database.services import (
     get_expense_for_user,
     list_user_expenses,
     profile_activity,
+    restore_expense as restore_expense_service,
     update_expense,
     update_profile,
 )
@@ -587,10 +591,36 @@ def _register_main_routes(app: Flask) -> None:
             found = destroy_expense(id, current_user.id)
             if not found:
                 abort(404)
-            flash("Expense deleted.", "info")
+            restore_url = url_for("restore_expense", id=id)
+            flash(
+                Markup(
+                    "Expense deleted. "
+                    f'<form method="POST" action="{restore_url}" '
+                    f'class="flash-undo-form" data-undo-seconds="{UNDO_WINDOW_SECONDS}">'
+                    f'<input type="hidden" name="csrf_token" value="{generate_csrf()}">'
+                    '<button type="submit" class="flash-undo-btn">Undo</button>'
+                    "</form>"
+                ),
+                "info",
+            )
         except SQLAlchemyError as exc:
             db.session.rollback()
             current_app.logger.error("DB error deleting expense %s: %s", id, exc)
+            flash("A database error occurred. Please try again.", "error")
+        return redirect(url_for("expenses_list"))
+
+    @app.route("/expenses/<int:id>/restore", methods=["POST"])
+    @login_required
+    def restore_expense(id: int) -> ResponseReturnValue:
+        try:
+            restored = restore_expense_service(id, current_user.id)
+            if restored:
+                flash("Expense restored.", "success")
+            else:
+                flash("This expense can no longer be restored.", "error")
+        except SQLAlchemyError as exc:
+            db.session.rollback()
+            current_app.logger.error("DB error restoring expense %s: %s", id, exc)
             flash("A database error occurred. Please try again.", "error")
         return redirect(url_for("expenses_list"))
 

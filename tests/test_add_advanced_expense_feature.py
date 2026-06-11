@@ -34,7 +34,6 @@ from sqlalchemy import select
 
 from database.db import Expense, User
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 
@@ -381,7 +380,7 @@ def test_edit_expense_post_valid_data_redirects_to_expenses_list(
 def test_delete_expense_owned_deletes_row_and_redirects(
     auth_client, app, demo_user, db_session
 ):
-    # Spec §Definition of done — POST /expenses/<id>/delete deletes the row, 302 to /expenses
+    # Spec §Definition of done — POST /expenses/<id>/delete soft-deletes the row, 302 to /expenses
     # Create a dedicated expense so teardown of demo_expenses is not affected
     with app.app_context():
         from database.db import db as _db
@@ -408,8 +407,15 @@ def test_delete_expense_owned_deletes_row_and_redirects(
     with app.app_context():
         from database.db import db as _db
 
-        gone = _db.session.get(Expense, victim_id)
-        assert gone is None, "Expense row should have been deleted"
+        victim_after = _db.session.get(Expense, victim_id)
+        assert victim_after is not None, "Soft-deleted row should remain in the DB"
+        assert victim_after.deleted_at is not None, (
+            "Expense should be soft-deleted (deleted_at set)"
+        )
+
+        # Cleanup — hard-delete so this row doesn't linger for the purge window
+        _db.session.delete(victim_after)
+        _db.session.commit()
 
 
 def test_delete_expense_owned_no_longer_appears_in_list(auth_client, app, demo_user):
@@ -997,12 +1003,19 @@ def test_dashboard_totals_correct_after_deleting_expense(auth_client, app, demo_
     response = auth_client.get(dashboard_url + "?period=all_time")
     assert response.status_code == 200
 
-    # Verify row is gone
+    # Verify row is soft-deleted (excluded from totals but still present in the DB)
     with app.app_context():
         from database.db import db as _db
 
-        gone = _db.session.get(Expense, temp_id)
-        assert gone is None
+        temp_after = _db.session.get(Expense, temp_id)
+        assert temp_after is not None, "Soft-deleted row should remain in the DB"
+        assert temp_after.deleted_at is not None, (
+            "Expense should be soft-deleted (deleted_at set)"
+        )
+
+        # Cleanup — hard-delete so this row doesn't linger for the purge window
+        _db.session.delete(temp_after)
+        _db.session.commit()
 
 
 def test_profile_activity_correct_after_expense_edit(auth_client, app, demo_expenses):

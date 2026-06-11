@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initAOS();
     initLucide();
     initMockBars();
+    initFlashUndo();
 });
 
 // Re-run Lucide after Alpine.js processes the DOM so dynamic icons render
@@ -44,6 +45,37 @@ function initLucide() {
         lucide.createIcons();
     } catch (err) {
         console.warn('[Spendly] Lucide init failed:', err);
+    }
+}
+
+// ------------------------------------------------------------------ //
+// Flash "Undo" countdown — depletes alongside the server-side         //
+// undo window for soft-deleted expenses                               //
+// ------------------------------------------------------------------ //
+
+function initFlashUndo() {
+    try {
+        document.querySelectorAll('.flash-undo-form[data-undo-seconds]').forEach((form) => {
+            const seconds = parseFloat(form.dataset.undoSeconds) || 8;
+            const flash = form.closest('.flash');
+            const button = form.querySelector('.flash-undo-btn');
+            if (!flash || !button) return;
+
+            const bar = document.createElement('div');
+            bar.className = 'flash-countdown';
+            flash.appendChild(bar);
+
+            requestAnimationFrame(() => {
+                bar.style.transitionDuration = `${seconds}s`;
+                bar.classList.add('is-counting');
+            });
+
+            setTimeout(() => {
+                button.disabled = true;
+            }, seconds * 1000);
+        });
+    } catch (err) {
+        console.warn('[Spendly] Flash undo init failed:', err);
     }
 }
 
