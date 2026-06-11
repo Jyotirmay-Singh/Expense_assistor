@@ -1,0 +1,76 @@
+{# Inline edit form row — swapped in by HTMX; outerHTML replaces the target <tr> #}
+<tr class="db-tr db-tr-editing">
+  <td colspan="5" style="padding:0.5rem 0.75rem;">
+
+    {% if errors %}
+    <ul class="exp-inline-errors">
+      {% for msg in errors %}
+      <li>{{ msg }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form hx-post="{{ url_for('edit_expense_post', id=expense.id) }}"
+          hx-target="closest tr"
+          hx-swap="outerHTML"
+          class="exp-inline-form">
+
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <input type="text"
+             name="title"
+             class="form-input exp-inline-input"
+             value="{{ form_data.title }}"
+             maxlength="200"
+             placeholder="Description"
+             required
+             autocomplete="off">
+
+      <input type="number"
+             name="amount"
+             class="form-input exp-inline-input"
+             value="{{ form_data.amount }}"
+             min="0.01"
+             step="0.01"
+             placeholder="0.00"
+             required>
+
+      <select name="category"
+              class="form-select exp-inline-select"
+              required>
+        <option value="" disabled {% if not form_data.category %}selected{% endif %}>
+          Category
+        </option>
+        {% for cat in categories %}
+        <option value="{{ cat }}"
+                {% if form_data.category == cat %}selected{% endif %}>
+          {{ cat }}
+        </option>
+        {% endfor %}
+      </select>
+
+      <input type="date"
+             name="date"
+             class="form-input exp-inline-input"
+             value="{{ form_data.date }}"
+             required>
+
+      <input type="text"
+             name="notes"
+             class="form-input exp-inline-input"
+             value="{{ form_data.notes }}"
+             maxlength="1000"
+             placeholder="Notes (optional)">
+
+      <div class="exp-inline-actions">
+        <button type="submit" class="exp-inline-save">Save</button>
+        <button type="button"
+                class="exp-inline-cancel"
+                hx-get="{{ url_for('edit_expense', id=expense.id) }}?cancel=1"
+                hx-target="closest tr"
+                hx-swap="outerHTML">Cancel</button>
+      </div>
+
+    </form>
+  </td>
+</tr>

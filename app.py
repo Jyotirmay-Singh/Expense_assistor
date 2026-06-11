@@ -474,6 +474,26 @@ def _register_main_routes(app: Flask) -> None:
         expense = get_expense_for_user(id, current_user.id)
         if expense is None:
             abort(404)
+        if request.headers.get("HX-Request"):
+            if request.args.get("cancel"):
+                return render_template(
+                    "partials/_expense_row.html",
+                    exp=expense,
+                    currency=current_user.default_currency,
+                )
+            return render_template(
+                "partials/_edit_expense_row.html",
+                expense=expense,
+                form_data={
+                    "title": expense.title,
+                    "amount": str(expense.amount),
+                    "category": expense.category,
+                    "date": expense.date.isoformat(),
+                    "notes": expense.notes or "",
+                },
+                categories=CATEGORIES,
+                errors=[],
+            )
         return render_template(
             "expense_form.html",
             user=current_user,
@@ -506,7 +526,16 @@ def _register_main_routes(app: Flask) -> None:
         try:
             data = ExpenseSchema(**raw)
         except ValidationError as exc:
-            for msg in extract_messages(exc):
+            errors = extract_messages(exc)
+            if request.headers.get("HX-Request"):
+                return render_template(
+                    "partials/_edit_expense_row.html",
+                    expense=expense,
+                    form_data=raw,
+                    categories=CATEGORIES,
+                    errors=errors,
+                )
+            for msg in errors:
                 flash(msg, "error")
             return render_template(
                 "expense_form.html",
@@ -519,11 +548,25 @@ def _register_main_routes(app: Flask) -> None:
             )
         try:
             update_expense(expense, data)
+            if request.headers.get("HX-Request"):
+                return render_template(
+                    "partials/_expense_row.html",
+                    exp=expense,
+                    currency=current_user.default_currency,
+                )
             flash("Expense updated.", "success")
             return redirect(url_for("expenses_list"))
         except SQLAlchemyError as exc:
             db.session.rollback()
             current_app.logger.error("DB error updating expense %s: %s", id, exc)
+            if request.headers.get("HX-Request"):
+                return render_template(
+                    "partials/_edit_expense_row.html",
+                    expense=expense,
+                    form_data=raw,
+                    categories=CATEGORIES,
+                    errors=["A database error occurred. Please try again."],
+                )
             flash("A database error occurred. Please try again.", "error")
             return render_template(
                 "expense_form.html",
