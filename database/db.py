@@ -117,6 +117,9 @@ class Expense(db.Model):
         onupdate=_utcnow,
         nullable=False,
     )
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
 
     user: Mapped["User"] = relationship(back_populates="expenses")
 

@@ -1,10 +1,10 @@
 from calendar import monthrange
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from zoneinfo import ZoneInfo
 
 from flask import current_app
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from database.db import Expense, User, db
 from database.schemas import (
@@ -13,6 +13,12 @@ from database.schemas import (
     ExpenseSchema,
     ProfileUpdateSchema,
 )
+
+# Soft-delete tuning: how long "Undo" works, and how long a soft-deleted row
+# survives before being purged. PURGE_AFTER_SECONDS must stay well above
+# UNDO_WINDOW_SECONDS so a row can never be purged mid-undo.
+UNDO_WINDOW_SECONDS = 8
+PURGE_AFTER_SECONDS = 60
 
 
 def update_profile(user: User, data: ProfileUpdateSchema) -> None:
@@ -62,7 +68,7 @@ def _period_bounds(period: str) -> tuple[date | None, date | None]:
 
 
 def _where_user_and_period(uid: int, lo: date | None, hi: date | None) -> list:
-    clauses: list = [Expense.user_id == uid]
+    clauses: list = [Expense.user_id == uid, Expense.deleted_at.is_(None)]
     if lo is not None:
         clauses.append(Expense.date >= lo)
     if hi is not None:
@@ -233,10 +239,14 @@ def profile_activity(user: User, data: DateRangeSchema) -> dict[str, object]:
 
 
 def list_user_expenses(user: User) -> list[Expense]:
+    purge_expired_soft_deletes(user.id)
     return list(
         db.session.execute(
             select(Expense)
-            .where(Expense.user_id == user.id)
+            .where(
+                Expense.user_id == user.id,
+                Expense.deleted_at.is_(None),
+            )
             .order_by(Expense.date.desc(), Expense.id.desc())
         ).scalars()
     )
@@ -247,6 +257,7 @@ def get_expense_for_user(expense_id: int, user_id: int) -> Expense | None:
         select(Expense).where(
             Expense.id == expense_id,
             Expense.user_id == user_id,
+            Expense.deleted_at.is_(None),
         )
     ).scalar_one_or_none()
 
@@ -279,6 +290,47 @@ def destroy_expense(expense_id: int, user_id: int) -> bool:
     expense = get_expense_for_user(expense_id, user_id)
     if expense is None:
         return False
-    db.session.delete(expense)
+    expense.deleted_at = datetime.now(timezone.utc)
     db.session.commit()
     return True
+
+
+def restore_expense(expense_id: int, user_id: int) -> bool:
+    expense = db.session.execute(
+        select(Expense).where(
+            Expense.id == expense_id,
+            Expense.user_id == user_id,
+            Expense.deleted_at.is_not(None),
+        )
+    ).scalar_one_or_none()
+
+    if expense is None:
+        return False
+
+    if datetime.now(timezone.utc) - expense.deleted_at > timedelta(
+        seconds=UNDO_WINDOW_SECONDS
+    ):
+        return False
+
+    expense.deleted_at = None
+    db.session.commit()
+    return True
+
+
+def purge_expired_soft_deletes(user_id: int) -> int:
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=PURGE_AFTER_SECONDS)
+    result = db.session.execute(
+        delete(Expense).where(
+            Expense.user_id == user_id,
+            Expense.deleted_at.is_not(None),
+            Expense.deleted_at < cutoff,
+        )
+    )
+    db.session.commit()
+    if result.rowcount:
+        current_app.logger.info(
+            "Purged %d soft-deleted expense(s) for user_id=%s",
+            result.rowcount,
+            user_id,
+        )
+    return result.rowcount
