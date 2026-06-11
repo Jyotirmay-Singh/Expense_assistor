@@ -1260,3 +1260,121 @@ a { color: inherit; text-decoration: none; }
 .exp-btn-danger:hover {
     color: var(--danger); border-color: var(--danger); background: var(--danger-light);
 }
+
+/* ------------------------------------------------------------------ */
+/* Expense list — inline edit row & Alpine.js delete confirmation       */
+/* ------------------------------------------------------------------ */
+
+.db-tr-editing { background: var(--accent-light); }
+.db-tr-editing:hover td { background: var(--accent-light); }
+
+.exp-inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.exp-inline-input,
+.exp-inline-select {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--paper-card);
+    color: var(--ink);
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.15s;
+}
+.exp-inline-input:focus,
+.exp-inline-select:focus { border-color: var(--accent); }
+
+.exp-inline-input[name="title"]     { flex: 2 1 140px; min-width: 100px; }
+.exp-inline-input[name="amount"]    { flex: 1 1 80px;  min-width: 60px; }
+.exp-inline-select[name="category"] { flex: 1 1 110px; min-width: 90px; }
+.exp-inline-input[name="date"]      { flex: 1 1 110px; min-width: 90px; }
+.exp-inline-input[name="notes"]     { flex: 2 1 120px; min-width: 80px; }
+
+.exp-inline-actions { display: flex; gap: 0.35rem; align-items: center; flex-shrink: 0; }
+
+.exp-inline-save {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    background: var(--accent);
+    color: var(--paper);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.exp-inline-save:hover { opacity: 0.85; }
+
+.exp-inline-cancel {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    background: transparent;
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.exp-inline-cancel:hover { border-color: var(--ink); color: var(--ink); }
+
+.exp-inline-errors {
+    list-style: none;
+    margin: 0 0 0.4rem;
+    padding: 0.35rem 0.6rem;
+    background: var(--danger-light);
+    border-left: 3px solid var(--danger);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    color: var(--danger);
+}
+.exp-inline-errors li + li { margin-top: 0.2rem; }
+
+.exp-confirm-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.exp-confirm-text {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.exp-confirm-yes {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.78rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    background: var(--danger);
+    color: var(--paper);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.exp-confirm-yes:hover { opacity: 0.85; }
+
+.exp-confirm-no {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.78rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    background: transparent;
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.exp-confirm-no:hover { border-color: var(--ink); color: var(--ink); }
