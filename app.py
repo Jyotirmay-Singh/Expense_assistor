@@ -38,11 +38,9 @@ from database.services import (
     compute_dashboard,
     create_expense,
     destroy_expense,
-    empty_activity_payload,
     empty_dashboard_payload,
     get_expense_for_user,
     list_user_expenses,
-    profile_activity,
     restore_expense as restore_expense_service,
     update_expense,
     update_profile,
@@ -267,13 +265,29 @@ def _register_main_routes(app: Flask) -> None:
     @login_required
     def dashboard() -> ResponseReturnValue:
         period = coerce_period(request.args.get("period")).period
+        start_date = end_date = None
+
+        if period == "custom":
+            raw_start = request.args.get("start_date") or None
+            raw_end = request.args.get("end_date") or None
+            try:
+                date_range = DateRangeSchema(start_date=raw_start, end_date=raw_end)
+            except ValidationError:
+                date_range = DateRangeSchema()
+            if date_range.start_date and date_range.end_date:
+                start_date, end_date = date_range.start_date, date_range.end_date
+            else:
+                period = "this_month"
+
         try:
-            payload = compute_dashboard(current_user, period)
+            payload = compute_dashboard(current_user, period, start_date, end_date)
         except SQLAlchemyError as exc:
             db.session.rollback()
             current_app.logger.error("DB error on /dashboard: %s", exc)
             flash("A database error occurred loading your dashboard.", "error")
-            payload = empty_dashboard_payload(current_user, period)
+            payload = empty_dashboard_payload(
+                current_user, period, start_date, end_date
+            )
         return render_template(
             "dashboard.html",
             user=current_user,
@@ -285,35 +299,10 @@ def _register_main_routes(app: Flask) -> None:
     @app.route("/profile", methods=["GET"])
     @login_required
     def profile() -> ResponseReturnValue:
-        raw_start = request.args.get("start_date") or None
-        raw_end = request.args.get("end_date") or None
-
-        range_error: str | None = None
-        try:
-            date_range = DateRangeSchema(start_date=raw_start, end_date=raw_end)
-        except ValidationError as exc:
-            range_error = extract_messages(exc)[0]
-            date_range = DateRangeSchema()
-
-        try:
-            activity = profile_activity(current_user, date_range)
-        except SQLAlchemyError as exc:
-            db.session.rollback()
-            current_app.logger.error("DB error on /profile activity: %s", exc)
-            flash("A database error occurred loading your activity.", "error")
-            activity = empty_activity_payload(current_user, date_range)
-
-        activity["range_error"] = range_error
-        activity["raw_start"] = raw_start or ""
-        activity["raw_end"] = raw_end or ""
-
-        if request.headers.get("HX-Request"):
-            return render_template("partials/_activity_results.html", **activity)
         return render_template(
             "profile.html",
             user=current_user,
             currencies=ALLOWED_CURRENCIES,
-            **activity,
         )
 
     @app.route("/profile", methods=["POST"])
@@ -378,11 +367,6 @@ def _register_main_routes(app: Flask) -> None:
             flash("An unexpected error occurred. Please try again.", "error")
 
         return redirect(url_for("profile"))
-
-    @app.route("/analytics")
-    @login_required
-    def analytics() -> ResponseReturnValue:
-        return render_template("analytics.html", user=current_user)
 
     # ── Expenses list ─────────────────────────────────────────────────
 

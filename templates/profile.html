@@ -50,51 +50,6 @@
 
             <div class="profile-main">
 
-                <article class="profile-card" data-aos="fade-up" data-aos-delay="100">
-                    <h2 class="profile-card-title">
-                        <i data-lucide="calendar-search" class="icon-sm"></i>
-                        Spending activity
-                    </h2>
-
-                    <form x-data='{ start: {{ raw_start | tojson }}, end: {{ raw_end | tojson }},
-                                    get badRange() { return this.start && this.end && this.end < this.start; } }'
-                          hx-get="{{ url_for('profile') }}"
-                          hx-target="#activity-results"
-                          hx-swap="innerHTML"
-                          hx-push-url="true"
-                          hx-indicator="#activity-spinner"
-                          class="mb-5 flex flex-wrap items-end gap-3">
-                        <div class="flex flex-col gap-1.5">
-                            <label for="start_date" class="text-[0.8rem] font-medium text-ink-muted">From</label>
-                            <input type="date" id="start_date" name="start_date" x-model="start"
-                                   value="{{ raw_start }}" max="{{ today_ist }}"
-                                   class="rounded-input border border-border bg-paper-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none">
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label for="end_date" class="text-[0.8rem] font-medium text-ink-muted">To</label>
-                            <input type="date" id="end_date" name="end_date" x-model="end"
-                                   value="{{ raw_end }}" max="{{ today_ist }}"
-                                   class="rounded-input border border-border bg-paper-card px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none">
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button type="submit" :disabled="badRange"
-                                    class="inline-flex items-center gap-1.5 rounded-input bg-ink px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed">
-                                <i data-lucide="filter" class="icon-sm"></i>
-                                Filter
-                                <i id="activity-spinner" data-lucide="loader-circle" class="icon-spin htmx-indicator"></i>
-                            </button>
-                            <a href="{{ url_for('profile') }}" class="text-sm font-medium text-ink-muted underline hover:text-accent">Clear</a>
-                        </div>
-                        <p x-show="badRange" x-cloak class="w-full text-[0.8rem] font-medium text-danger">
-                            End date can't be before start date.
-                        </p>
-                    </form>
-
-                    <div id="activity-results">
-                        {% include "partials/_activity_results.html" %}
-                    </div>
-                </article>
-
                 <article class="profile-card" data-aos="fade-up" data-aos-delay="150">
                     <h2 class="profile-card-title">
                         <i data-lucide="user-pen" class="icon-sm"></i>

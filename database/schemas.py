@@ -7,7 +7,6 @@ from pydantic import BaseModel, ValidationError, field_validator, model_validato
 
 from database.db import CATEGORIES
 
-
 ALLOWED_CURRENCIES: tuple[str, ...] = (
     "AED",
     "AUD",
@@ -167,11 +166,11 @@ class ChangePasswordSchema(BaseModel):
 # Dashboard period schema                                              #
 # ------------------------------------------------------------------ #
 
-DASHBOARD_PERIODS: tuple[str, ...] = ("this_month", "last_month", "all_time")
+DASHBOARD_PERIODS: tuple[str, ...] = ("this_month", "last_month", "all_time", "custom")
 
 
 class DashboardPeriodSchema(BaseModel):
-    period: Literal["this_month", "last_month", "all_time"] = "this_month"
+    period: Literal["this_month", "last_month", "all_time", "custom"] = "this_month"
 
 
 def coerce_period(raw: str | None) -> DashboardPeriodSchema:

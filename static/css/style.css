@@ -1058,6 +1058,19 @@ a { color: inherit; text-decoration: none; }
     color: #fff;
 }
 
+.db-custom-range-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-3);
+    flex-basis: 100%;
+    margin-top: var(--space-3);
+}
+
+.db-custom-range-form .form-group {
+    margin-bottom: 0;
+}
+
 /* ── KPI cards ── */
 .db-kpi-grid {
     display: grid;

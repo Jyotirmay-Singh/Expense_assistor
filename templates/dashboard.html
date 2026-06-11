@@ -13,9 +13,10 @@
 <div class="db-container">
 
   {# ── Page header ─────────────────────────────────────────────────── #}
-  <header class="db-header" data-aos="fade-up" data-aos-duration="500">
+  <header class="db-header" data-aos="fade-up" data-aos-duration="500"
+          x-data="{ showCustom: {{ 'true' if period == 'custom' else 'false' }} }">
     <div class="db-header-left">
-      <h1 class="db-greeting">Hello, {{ user.display_name.split()[0] }}</h1>
+      <h1 class="db-greeting">Dashboard</h1>
       <p class="db-subheading">
         {% if period_start and period_end %}
           {{ period_start.strftime('%d %b') }} — {{ period_end.strftime('%d %b %Y') }}
@@ -28,12 +29,35 @@
     </div>
     <nav class="db-period-nav" aria-label="Period">
       {% for p in periods %}
+      {% if p != 'custom' %}
       <a href="{{ url_for('dashboard', period=p) }}"
          class="db-period-btn{% if p == period %} is-active{% endif %}">
         {{ p.replace('_', ' ').title() }}
       </a>
+      {% endif %}
       {% endfor %}
+      <button type="button" @click="showCustom = !showCustom"
+              class="db-period-btn{% if period == 'custom' %} is-active{% endif %}">
+        Custom
+      </button>
     </nav>
+    <form method="GET" action="{{ url_for('dashboard') }}"
+          x-show="showCustom" x-cloak class="db-custom-range-form">
+      <input type="hidden" name="period" value="custom">
+      <div class="form-group">
+        <label for="start_date">From</label>
+        <input type="date" id="start_date" name="start_date" class="form-input"
+               value="{{ period_start.isoformat() if period == 'custom' and period_start else '' }}"
+               max="{{ today_ist }}">
+      </div>
+      <div class="form-group">
+        <label for="end_date">To</label>
+        <input type="date" id="end_date" name="end_date" class="form-input"
+               value="{{ period_end.isoformat() if period == 'custom' and period_end else '' }}"
+               max="{{ today_ist }}">
+      </div>
+      <button type="submit" class="db-period-btn">Apply</button>
+    </form>
   </header>
 
   {# ── KPI cards ────────────────────────────────────────────────────── #}
@@ -64,6 +88,34 @@
       <p class="db-kpi-label">Avg per expense</p>
       <p class="db-kpi-value">{{ "{:,.2f}".format(average_amount) }}</p>
       <p class="db-kpi-currency">{{ currency }}</p>
+    </div>
+
+    <div class="db-kpi-card">
+      <div class="db-kpi-icon" style="background:var(--accent-2-light);">
+        <i data-lucide="bar-chart-2" style="color:var(--accent-2);width:20px;height:20px;"></i>
+      </div>
+      <p class="db-kpi-label">Median expense</p>
+      {% if median_amount is not none %}
+      <p class="db-kpi-value">{{ "{:,.2f}".format(median_amount) }}</p>
+      <p class="db-kpi-currency">{{ currency }}</p>
+      {% else %}
+      <p class="db-kpi-value">—</p>
+      <p class="db-kpi-currency">{{ currency }}</p>
+      {% endif %}
+    </div>
+
+    <div class="db-kpi-card">
+      <div class="db-kpi-icon" style="background:var(--accent-3-light);">
+        <i data-lucide="flame" style="color:var(--accent-3);width:20px;height:20px;"></i>
+      </div>
+      <p class="db-kpi-label">Busiest day</p>
+      {% if busiest_day_date %}
+      <p class="db-kpi-value">{{ busiest_day_date.strftime('%d %b') }}</p>
+      <p class="db-kpi-currency">{{ busiest_day_count }} expense{{ 's' if busiest_day_count != 1 else '' }}</p>
+      {% else %}
+      <p class="db-kpi-value">—</p>
+      <p class="db-kpi-currency">No data</p>
+      {% endif %}
     </div>
 
   </div>
@@ -151,7 +203,7 @@
     <div class="db-card-header-row">
       <h2 class="db-card-title">
         <i data-lucide="clock"></i>
-        Recent expenses
+        {% if period == 'custom' %}Expenses in range{% else %}Recent expenses{% endif %}
       </h2>
       <a href="{{ url_for('add_expense') }}" class="db-add-btn">
         <i data-lucide="plus"></i>
@@ -191,8 +243,12 @@
     </div>
     {% else %}
     <p class="db-empty">
-      No expenses yet.
-      <a href="{{ url_for('add_expense') }}" style="color:var(--accent);">Add your first one →</a>
+      {% if period == 'custom' %}
+        No expenses in this date range.
+      {% else %}
+        No expenses yet.
+        <a href="{{ url_for('add_expense') }}" style="color:var(--accent);">Add your first one →</a>
+      {% endif %}
     </p>
     {% endif %}
   </div>
