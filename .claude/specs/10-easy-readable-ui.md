@@ -2,7 +2,7 @@
 
 ## Overview
 
-Spendly's core flows (registration, login, dashboard, profile, expenses CRUD) are all functionally complete after steps 1-9, but the UI was built quickly and has accumulated readability and accessibility gaps: low-contrast muted text (`--ink-muted`, `--ink-faint`), dense stat/table layouts with little visual hierarchy, missing focus-visible states for keyboard users, and icon-only controls without accessible labels. Step 10 is a **global, CSS- and template-driven readability and accessibility pass** — no new routes, no database changes, and no behavior changes. The goal is that every existing page is easier to scan, meets WCAG AA contrast for text, supports visible keyboard focus, and exposes proper labels for icon-only buttons and nav links to screen readers.
+FinCheck's core flows (registration, login, dashboard, profile, expenses CRUD) are all functionally complete after steps 1-9, but the UI was built quickly and has accumulated readability and accessibility gaps: low-contrast muted text (`--ink-muted`, `--ink-faint`), dense stat/table layouts with little visual hierarchy, missing focus-visible states for keyboard users, and icon-only controls without accessible labels. Step 10 is a **global, CSS- and template-driven readability and accessibility pass** — no new routes, no database changes, and no behavior changes. The goal is that every existing page is easier to scan, meets WCAG AA contrast for text, supports visible keyboard focus, and exposes proper labels for icon-only buttons and nav links to screen readers.
 
 ## Depends on
 

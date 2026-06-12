@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Establish the PostgreSQL data layer foundation for the Spendly Flask application. This step replaces the SQLite placeholder with a robust SQLAlchemy 2.0 ORM setup against PostgreSQL, integrated with Alembic (via flask-migrate) for schema migrations. All future domains (profile, dashboard, expenses CRUD) depend on this schema and on the `db.session` request-scoped session being correctly wired.
+Establish the PostgreSQL data layer foundation for the FinCheck Flask application. This step replaces the SQLite placeholder with a robust SQLAlchemy 2.0 ORM setup against PostgreSQL, integrated with Alembic (via flask-migrate) for schema migrations. All future domains (profile, dashboard, expenses CRUD) depend on this schema and on the `db.session` request-scoped session being correctly wired.
 
 ## 2. Depends on
 
@@ -67,13 +67,13 @@ Table-level check constraints:
 - Use SQLAlchemy 2.0 syntax: `db.session.execute(select(User).limit(1)).scalar_one_or_none()` to detect existing data — return early if any user exists (idempotent).
 - Insert one demo user:
   - Name: `Demo User`
-  - Email: `demo@spendly.dev`
+  - Email: `demo@fincheck.dev`
   - Password: hashed via `user.set_password("Demo@1234")`.
 - Insert 8 sample expenses linked to the demo user covering multiple categories, dated across the current month. Amounts are constructed with `decimal.Decimal` literals — never floats.
 
 ## 6. Changes to `app.py`
 
-- `SQLALCHEMY_DATABASE_URI` defaults to `postgresql+psycopg2://spendly:spendly@localhost:5544/spendly` (overridable via the `DATABASE_URL` env var). The host port is 5544 to avoid colliding with native PostgreSQL services the developer may have installed on 5432/5433.
+- `SQLALCHEMY_DATABASE_URI` defaults to `postgresql+psycopg2://fincheck:fincheck@localhost:5544/fincheck` (overridable via the `DATABASE_URL` env var). The host port is 5544 to avoid colliding with native PostgreSQL services the developer may have installed on 5432/5433.
 - Remove the `os.makedirs(app.instance_path, ...)` SQLite scaffolding — no longer needed.
 - `if __name__ == "__main__":` calls `seed_db(app)` only (not `init_db`). Schema is owned by Alembic; running `python app.py` against a freshly-migrated empty DB will populate demo data on first start.
 
@@ -130,7 +130,7 @@ These are enforced by the `ck_expense_category_valid` table-level check constrai
 
 ## 13. Definition of done
 
-- [x] Docker compose service `spendly_postgres` is running and healthy.
+- [x] Docker compose service `fincheck_postgres` is running and healthy.
 - [x] `database/db.py` uses SQLAlchemy 2.0 typed mappings (`DeclarativeBase`, `Mapped`, `mapped_column`).
 - [x] `Numeric(10, 2)` is used for `amount`; the seed uses `decimal.Decimal` literals.
 - [x] Initial Alembic migration is generated and applies cleanly.

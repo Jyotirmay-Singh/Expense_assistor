@@ -62,7 +62,7 @@ def create_app() -> Flask:
         SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret-change-in-production"),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             "DATABASE_URL",
-            "postgresql+psycopg2://spendly:spendly@localhost:5544/spendly",
+            "postgresql+psycopg2://fincheck:fincheck@localhost:5544/fincheck",
         ),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SQLALCHEMY_ENGINE_OPTIONS={"pool_pre_ping": True},
@@ -170,7 +170,7 @@ def _register_auth_routes(app: Flask) -> None:
                 login_user(user, remember=False)
                 user.last_login_at = datetime.now(timezone.utc)
                 db.session.commit()
-                flash(f"Welcome to Spendly, {user.display_name}!", "success")
+                flash(f"Welcome to FinCheck, {user.display_name}!", "success")
                 return redirect(url_for("dashboard"))
 
             except SQLAlchemyError as exc:

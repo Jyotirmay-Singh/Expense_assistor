@@ -120,7 +120,7 @@ No new dependencies. `decimal.Decimal`, `datetime.date`, and all required SQLAlc
 ## Definition of done
 
 - [ ] `GET /expenses` as a logged-out user redirects to `/login`.
-- [ ] `GET /expenses` as `demo@spendly.dev` renders HTTP 200 and lists all 8 seed expenses, newest first, each row showing date, title, category badge, and formatted amount with the user's `default_currency`.
+- [ ] `GET /expenses` as `demo@fincheck.dev` renders HTTP 200 and lists all 8 seed expenses, newest first, each row showing date, title, category badge, and formatted amount with the user's `default_currency`.
 - [ ] `GET /expenses/add` renders an empty form at HTTP 200 with all required fields and the CSRF token present.
 - [ ] Submitting `POST /expenses/add` with valid data (`title="Lunch"`, `amount=250.50`, `category="Food"`, `date=today`) creates a new row in `expenses`, redirects to `/expenses` (HTTP 302 → 200), and the new expense appears at the top of the list.
 - [ ] Submitting `POST /expenses/add` with `amount=-5` or `amount=0` returns HTTP 200 with the form re-rendered and an error message; no row is inserted.

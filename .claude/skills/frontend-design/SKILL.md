@@ -1,15 +1,15 @@
 ---
-name: spendly-ui-designer
-description: Designs and generates modern, production-ready UI for Spendly, a personal expense tracker built (repo - https://github.com/Jyotirmay-Singh/Expense_assistor). Produces clean fintech-style pages and components - cards, forms, tables, dashboards, modals, charts - with consistent spacing, soft shadows, rounded corners, Lucide icons, and lightweight interactivity via HTMX, Alpine.js, and Chart.js. Use this skill whenever the user asks to design, build, create, redesign, improve, or style any Spendly page, screen, section, or component - including phrasings like "design the X page", "create UI for X", "build a component for X", "make the X look better", "redesign X", "add a chart to X", "make X interactive", or any request about Spendly's frontend, layout, CSS, charts, or visual polish - even when Spendly isn't named explicitly if the conversation context is clearly about it.
+name: fincheck-ui-designer
+description: Designs and generates modern, production-ready UI for FinCheck, a personal expense tracker built (repo - https://github.com/Jyotirmay-Singh/Expense_assistor). Produces clean fintech-style pages and components - cards, forms, tables, dashboards, modals, charts - with consistent spacing, soft shadows, rounded corners, Lucide icons, and lightweight interactivity via HTMX, Alpine.js, and Chart.js. Use this skill whenever the user asks to design, build, create, redesign, improve, or style any FinCheck page, screen, section, or component - including phrasings like "design the X page", "create UI for X", "build a component for X", "make the X look better", "redesign X", "add a chart to X", "make X interactive", or any request about FinCheck's frontend, layout, CSS, charts, or visual polish - even when FinCheck isn't named explicitly if the conversation context is clearly about it.
 metadata:
   disable-model-invocation: true
 ---
 
-# Spendly UI Designer
+# FinCheck UI Designer
 
-You are designing frontend UI for **Spendly**, a personal expense tracker. Spendly is a Flask app with server-rendered Jinja2 templates, vanilla CSS, and lightweight interactivity layered on top. The goal of this skill is to help you generate UI that feels like it belongs in a polished, modern fintech product - not generic bootstrap-era output, and not a React/Tailwind rewrite that doesn't match the stack.
+You are designing frontend UI for **FinCheck**, a personal expense tracker. FinCheck is a Flask app with server-rendered Jinja2 templates, vanilla CSS, and lightweight interactivity layered on top. The goal of this skill is to help you generate UI that feels like it belongs in a polished, modern fintech product - not generic bootstrap-era output, and not a React/Tailwind rewrite that doesn't match the stack.
 
-## What Spendly's stack looks like
+## What FinCheck's stack looks like
 
 - **Backend:** Flask (`app.py`), SQLite or similar (`database/`)
 - **Templates:** Jinja2 in `templates/` (e.g. `base.html`, `dashboard.html`, `add_expense.html`)
@@ -20,7 +20,7 @@ You are designing frontend UI for **Spendly**, a personal expense tracker. Spend
   - **Alpine.js** — purely client-side UI state (open/close a modal, toggle a dropdown, switch tabs, dismiss a toast). The modern replacement for the old "sprinkle of vanilla JS."
   - **Chart.js** — dashboard visualizations (category donut, spend-over-time line, income-vs-expense bars).
 
-This trio is the idiomatic 2026 way to make a server-rendered Flask app feel interactive *without* adopting a SPA framework. It keeps the app's center of gravity in Python and HTML, which is exactly where Spendly wants it.
+This trio is the idiomatic 2026 way to make a server-rendered Flask app feel interactive *without* adopting a SPA framework. It keeps the app's center of gravity in Python and HTML, which is exactly where FinCheck wants it.
 
 **Do not introduce React, Vue, Svelte, Tailwind, shadcn, Bootstrap, or styled-components** unless the user explicitly asks for a migration. HTMX/Alpine/Chart.js are additive sprinkles, not a framework swap.
 
@@ -36,7 +36,7 @@ The most common mistake is using the wrong layer - e.g. hand-rolling a `fetch()`
 | Open/close a modal, dropdown, or accordion | **Alpine.js** (`x-data`, `x-show`) | Pure UI state. No server, no round-trip. |
 | Switch tabs, toggle a "show details" panel, password visibility | **Alpine.js** | Same - client-only state. |
 | Show/auto-dismiss a toast or flash message | **Alpine.js** (`x-init` + `setTimeout`) | Ephemeral UI. |
-| Draw a chart from data passed by the route | **Chart.js** | Canvas-based, themed to the Spendly palette. |
+| Draw a chart from data passed by the route | **Chart.js** | Canvas-based, themed to the FinCheck palette. |
 | A one-off tiny DOM tweak with no state | plain vanilla JS | Don't pull in a library for `el.classList.toggle()`. |
 
 Rule of thumb: **HTMX owns server state, Alpine owns client state, Chart.js owns data viz.** If a feature touches the database, it's HTMX. If it's just showing/hiding/animating something already on the page, it's Alpine.
@@ -44,7 +44,7 @@ Rule of thumb: **HTMX owns server state, Alpine owns client state, Chart.js owns
 For concrete, copy-ready recipes, read the reference file for the tool you're using:
 - `references/htmx-patterns.md` — live search, inline edit, delete-with-confirm, form submit + swap, infinite scroll, plus the Flask side (detecting `HX-Request`, rendering partials)
 - `references/alpinejs-patterns.md` — modal, dropdown, tabs, toast, multi-step form, click-outside
-- `references/chartjs-patterns.md` — category donut, spend-trend line, income-vs-expense bar, and how to theme charts to Spendly's colors
+- `references/chartjs-patterns.md` — category donut, spend-trend line, income-vs-expense bar, and how to theme charts to FinCheck's colors
 
 Don't dump the whole reference into your answer - pull the one pattern you need and adapt it.
 
@@ -86,7 +86,7 @@ Two gotchas worth knowing:
 
 ## Before you design: check what already exists
 
-If the user's project files are available (e.g. they've shared the repo, uploaded files, or you're inside the codebase), open `base.html`, the main CSS file, and one or two existing templates before generating anything new. The goal is *consistency* - Spendly should feel like one coherent product, not a collage.
+If the user's project files are available (e.g. they've shared the repo, uploaded files, or you're inside the codebase), open `base.html`, the main CSS file, and one or two existing templates before generating anything new. The goal is *consistency* - FinCheck should feel like one coherent product, not a collage.
 
 Specifically, look for and reuse:
 
@@ -99,7 +99,7 @@ Specifically, look for and reuse:
 
 If you can't see the existing files and the request is non-trivial, ask the user to share a screenshot or paste a relevant template before you generate. One screenshot of the existing dashboard saves three rounds of revision.
 
-## The Spendly design language
+## The FinCheck design language
 
 When you have no existing reference to follow, default to this. It's a clean, fintech-leaning aesthetic - close in spirit to Linear, Notion, or modern banking apps.
 
@@ -141,7 +141,7 @@ Call `lucide.createIcons()` after the DOM is ready **and after any dynamic DOM i
 
 Size icons via CSS with `width`/`height` on the resulting `<svg>`, or wrap in a sized span. Prefer 16px inline with text, 20px for buttons, 24px for section headers.
 
-Pick icons that carry meaning. A few Spendly-appropriate defaults:
+Pick icons that carry meaning. A few FinCheck-appropriate defaults:
 - Expense/spend: `arrow-down-right`, `shopping-bag`, `credit-card`
 - Income: `arrow-up-right`, `wallet`, `trending-up`
 - Budget: `target`, `pie-chart`
@@ -173,7 +173,7 @@ How to wire it up - which Flask route renders it, what variables/JSON the templa
 ## What to avoid
 
 - **Generic/dated looks** - no `<h1>Welcome to My App</h1>` with default browser styles, no sharp-cornered bordered boxes, no 2012-era bootstrap cards.
-- **Reaching for a framework** - no React/Vue/Tailwind/Bootstrap. The HTMX/Alpine/Chart.js trio covers the interactivity Spendly needs.
+- **Reaching for a framework** - no React/Vue/Tailwind/Bootstrap. The HTMX/Alpine/Chart.js trio covers the interactivity FinCheck needs.
 - **Wrong-layer interactivity** - don't hand-write `fetch()` + DOM manipulation when HTMX does it declaratively; don't make a server round-trip (HTMX) for something that's pure client state (Alpine). See the "when to reach for which" table.
 - **Over-charting** - one or two charts per dashboard, max. A donut and a trend line tell the story; five charts is noise. Always label axes and use the semantic palette (red = expense, green = income).
 - **Forgetting to re-init after swaps** - new Lucide icons / charts inside an HTMX-swapped fragment won't render unless you re-run their init. Account for it.

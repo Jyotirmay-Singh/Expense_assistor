@@ -25,7 +25,7 @@ Modify the `users` table by adding three columns:
 | `default_currency` | `String(3)` | `NOT NULL`, `server_default='INR'` | ISO 4217 code. Application-level allowlist enforced in `RegisterSchema`. |
 | `terms_accepted_at` | `DateTime(timezone=True)` | `NOT NULL` | Timestamp of acceptance. Set at registration; never updated. |
 
-Alembic migration must handle the existing demo user (`demo@spendly.dev`) seeded in Step 1. Backfill pattern:
+Alembic migration must handle the existing demo user (`demo@fincheck.dev`) seeded in Step 1. Backfill pattern:
 
 1. Add `display_name` as nullable, then `UPDATE users SET display_name = name WHERE display_name IS NULL`, then `ALTER COLUMN display_name SET NOT NULL`.
 2. Add `default_currency` in one step with `server_default='INR'` and `nullable=False` (PostgreSQL applies the default to existing rows atomically).

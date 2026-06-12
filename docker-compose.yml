@@ -1,20 +1,20 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: spendly_postgres
+    container_name: fincheck_postgres
     environment:
-      POSTGRES_USER: spendly
-      POSTGRES_PASSWORD: spendly
-      POSTGRES_DB: spendly
+      POSTGRES_USER: fincheck
+      POSTGRES_PASSWORD: fincheck
+      POSTGRES_DB: fincheck
     ports:
       - "5544:5432"
     volumes:
-      - spendly_pgdata:/var/lib/postgresql/data
+      - fincheck_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U spendly -d spendly"]
+      test: ["CMD-SHELL", "pg_isready -U fincheck -d fincheck"]
       interval: 5s
       timeout: 3s
       retries: 5
 
 volumes:
-  spendly_pgdata:
+  fincheck_pgdata:

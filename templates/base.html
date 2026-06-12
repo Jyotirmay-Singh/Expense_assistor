@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Spendly{% endblock %}</title>
+    <title>{% block title %}FinCheck{% endblock %}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,7 +46,7 @@
         <div class="nav-inner">
             <a href="{{ url_for('landing') }}" class="nav-brand">
                 <i data-lucide="wallet" class="brand-lucide"></i>
-                <span class="brand-name">Spendly</span>
+                <span class="brand-name">FinCheck</span>
             </a>
             <div class="nav-links">
                 {% if current_user.is_authenticated %}
@@ -89,11 +89,16 @@
         {% if messages %}
             <div class="flash-container">
                 {% for category, message in messages %}
-                    <div class="flash flash-{{ category }}">
-                        {% if category == 'success' %}<i data-lucide="check-circle" class="icon-xs"></i>
-                        {% elif category == 'error' %}<i data-lucide="alert-circle" class="icon-xs"></i>
-                        {% else %}<i data-lucide="info" class="icon-xs"></i>{% endif %}
-                        {{ message }}
+                    <div class="flash flash-{{ category }}" x-data="{ show: true }" x-show="show" x-transition.opacity.duration.200ms>
+                        <div class="flash-content">
+                            {% if category == 'success' %}<i data-lucide="check-circle" class="icon-xs"></i>
+                            {% elif category == 'error' %}<i data-lucide="alert-circle" class="icon-xs"></i>
+                            {% else %}<i data-lucide="info" class="icon-xs"></i>{% endif %}
+                            <span>{{ message }}</span>
+                        </div>
+                        <button type="button" class="flash-close" @click="show = false" aria-label="Dismiss notification">
+                            <i data-lucide="x" class="icon-xs"></i>
+                        </button>
                     </div>
                 {% endfor %}
             </div>
@@ -107,7 +112,7 @@
     <footer class="footer">
         <div class="footer-inner">
             <i data-lucide="wallet" class="footer-lucide"></i>
-            <span class="footer-name">Spendly</span>
+            <span class="footer-name">FinCheck</span>
             <p class="footer-copy">Track every rupee. Own your finances.</p>
             <p><a href="/terms">Terms and Conditions</a> &nbsp;|&nbsp; <a href="/privacy">Privacy Policy</a></p>
         </div>

@@ -31,7 +31,7 @@ function initAOS() {
             offset: 60,
         });
     } catch (err) {
-        console.warn('[Spendly] AOS init failed:', err);
+        console.warn('[FinCheck] AOS init failed:', err);
     }
 }
 
@@ -44,7 +44,7 @@ function initLucide() {
         if (typeof lucide === 'undefined') return;
         lucide.createIcons();
     } catch (err) {
-        console.warn('[Spendly] Lucide init failed:', err);
+        console.warn('[FinCheck] Lucide init failed:', err);
     }
 }
 
@@ -75,7 +75,7 @@ function initFlashUndo() {
             }, seconds * 1000);
         });
     } catch (err) {
-        console.warn('[Spendly] Flash undo init failed:', err);
+        console.warn('[FinCheck] Flash undo init failed:', err);
     }
 }
 
@@ -104,6 +104,6 @@ function initMockBars() {
         const card = document.querySelector('.mock-card');
         if (card) observer.observe(card);
     } catch (err) {
-        console.warn('[Spendly] Mock bars animation failed:', err);
+        console.warn('[FinCheck] Mock bars animation failed:', err);
     }
 }

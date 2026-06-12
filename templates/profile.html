@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Profile — Spendly{% endblock %}
+{% block title %}Profile — FinCheck{% endblock %}
 
 {% block content %}
 {% set parts = (user.display_name or user.name or '?').split() %}
@@ -129,16 +129,15 @@
                     </form>
                 </article>
 
-                <article class="profile-card" data-aos="fade-up" data-aos-delay="200"
-                         x-data="{ current: '', next: '', confirm: '',
-                                   get mismatch() { return this.confirm.length > 0 && this.next !== this.confirm; } }">
+                <article class="profile-card" data-aos="fade-up" data-aos-delay="200">
                     <h2 class="profile-card-title">
                         <i data-lucide="lock" class="icon-sm"></i>
                         Change password
                     </h2>
                     <form method="POST" action="{{ url_for('change_password_route') }}" novalidate
-                          x-data="{ loading: false }"
-                          @submit="if ($root.mismatch) { $event.preventDefault(); } else { loading = true; }">
+                          x-data="{ current: '', next: '', confirm: '', loading: false,
+                                    get mismatch() { return this.confirm.length > 0 && this.next !== this.confirm; } }"
+                          @submit="if (mismatch) { $event.preventDefault(); } else { loading = true; }">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                         <div class="form-group" x-data="{ show: false }">
@@ -147,7 +146,7 @@
                                 <input :type="show ? 'text' : 'password'"
                                        id="current_password" name="current_password"
                                        class="form-input"
-                                       x-model="$root.current"
+                                       x-model="current"
                                        required autocomplete="current-password">
                                 {% include "partials/_password_eye.html" %}
                             </div>
@@ -160,7 +159,7 @@
                                        id="new_password" name="new_password"
                                        class="form-input"
                                        placeholder="Min. 8 characters"
-                                       x-model="$root.next"
+                                       x-model="next"
                                        minlength="8" maxlength="72"
                                        required autocomplete="new-password">
                                 {% include "partials/_password_eye.html" %}
@@ -174,17 +173,17 @@
                                 <input :type="show ? 'text' : 'password'"
                                        id="confirm_password" name="confirm_password"
                                        class="form-input"
-                                       x-model="$root.confirm"
+                                       x-model="confirm"
                                        required autocomplete="new-password">
                                 {% include "partials/_password_eye.html" %}
                             </div>
-                            <p class="password-mismatch" x-show="$root.mismatch" x-cloak>
+                            <p class="password-mismatch" x-show="mismatch" x-cloak>
                                 Passwords do not match.
                             </p>
                         </div>
 
                         <button type="submit" class="btn-submit"
-                                :disabled="loading || $root.mismatch">
+                                :disabled="loading || mismatch">
                             <span x-show="!loading">Update password</span>
                             <span x-show="loading" class="btn-loading">
                                 <i data-lucide="loader-circle" class="icon-spin"></i>

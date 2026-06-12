@@ -6,7 +6,7 @@ Steps 1–5 delivered the data layer, registration, login/logout, the profile pa
 
 ## Depends on
 
-- **Step 1 (Database Setup)** — the `expenses` table with `user_id`, `amount` (`Numeric(10, 2)`), `category`, and an **indexed** `date` column (`database/db.py` line 107–109); the eight seed expenses for `demo@spendly.dev`, all dated across May 2026.
+- **Step 1 (Database Setup)** — the `expenses` table with `user_id`, `amount` (`Numeric(10, 2)`), `category`, and an **indexed** `date` column (`database/db.py` line 107–109); the eight seed expenses for `demo@fincheck.dev`, all dated across May 2026.
 - **Step 3 (Login and Logout)** — `@login_required`, `current_user`, and CSRF wiring already present in `base.html`.
 - **Step 4 (Profile Page Design)** — the `GET /profile` route, `templates/profile.html`, the `.profile-card` / `.form-group` / `.form-input` / `.btn-submit` CSS components, and the route → schema → service pattern this step extends.
 - **Step 5 (Backend for Dashboard)** — the private helpers `_where_user_and_period(uid, lo, hi)` and `_period_totals(uid, lo, hi)` in `database/services.py`, and the `coerce_period(...)` graceful-coercion pattern in `database/schemas.py` that this step mirrors for date input.
@@ -127,7 +127,7 @@ No new dependencies. `datetime.date` / `date.fromisoformat` are stdlib, Pydantic
 ## Definition of done
 
 - [ ] `GET /profile` as a logged-out user redirects to `/login` (existing `@login_required` behaviour, unchanged).
-- [ ] `GET /profile` with **no** query string as the seeded `demo@spendly.dev` user renders HTTP 200 and lists **all 8** seed expenses newest-first, with a summary count of `8` and total `8,299.50 INR`; the empty-state text does not appear.
+- [ ] `GET /profile` with **no** query string as the seeded `demo@fincheck.dev` user renders HTTP 200 and lists **all 8** seed expenses newest-first, with a summary count of `8` and total `8,299.50 INR`; the empty-state text does not appear.
 - [ ] `GET /profile?start=2026-05-05&end=2026-05-12` shows exactly the **4** expenses in that inclusive window (Python books, Netflix, Doctor visit, Metro pass — newest first), with summary count `4` and total `2,699.00 INR`.
 - [ ] `GET /profile?start=2026-05-10` (no `end`) shows every expense on/after 2026-05-10; `GET /profile?end=2026-05-03` (no `start`) shows every expense on/before 2026-05-03. Each returns 200.
 - [ ] `GET /profile?start=2026-05-31&end=2026-05-01` (reversed) swaps the bounds, returns the same set as the normal-order range, and renders 200 with no error logged.
@@ -141,4 +141,4 @@ No new dependencies. `datetime.date` / `date.fromisoformat` are stdlib, Pydantic
 - [ ] The `profile()` route body contains no `select(...)`, `func.*`, or `db.session.execute(...)` — all query construction lives in `database/services.py`.
 - [ ] No new hardcoded hex values were added to `static/css/style.css`; new rules use `var(--…)` tokens only. `profile.html` still extends `base.html` and uses `url_for()` for the form action and Clear link.
 - [ ] `ruff check .` and `ruff format --check .` pass with zero warnings.
-- [ ] Manual smoke test: log in as `demo@spendly.dev` → open `/profile` → confirm all 8 rows → apply a 5–12 May range → confirm 4 rows and the total → enter a reversed range and a garbage range → confirm graceful handling → click "Clear" → register a second account and confirm activity isolation → log out → confirm `/profile` redirects to `/login`.
+- [ ] Manual smoke test: log in as `demo@fincheck.dev` → open `/profile` → confirm all 8 rows → apply a 5–12 May range → confirm 4 rows and the total → enter a reversed range and a garbage range → confirm graceful handling → click "Clear" → register a second account and confirm activity isolation → log out → confirm `/profile` redirects to `/login`.

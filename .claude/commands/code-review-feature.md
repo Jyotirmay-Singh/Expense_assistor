@@ -1,5 +1,5 @@
 ---
-description: Runs parallel security and quality code review for a specific Spendly feature. Pass the spec name as an argument e.g. /code-review-feature 05-dashboard-backend
+description: Runs parallel security and quality code review for a specific FinCheck feature. Pass the spec name as an argument e.g. /code-review-feature 05-dashboard-backend
 allowed-tools: Bash(git diff), Bash(git diff --staged)
 ---
 
@@ -27,17 +27,17 @@ If both are empty, stop immediately and say:
 
 Invoke both subagents simultaneously with the exact same context. Do not wait for one to finish before starting the other.
 
-**spendly-security-reviewer** receives:
+**fincheck-security-reviewer** receives:
 - The combined git diff.
 - Spec file for context: `.claude/specs/$ARGUMENTS.md`
 - Source files to reference: `app.py`, `database/services.py`, and `database/schemas.py`.
 - Instruction: Review only the changed code for security vulnerabilities (focusing on IDOR, HTMX XSS, and missing CSRF/Validation). Do not comment on quality, layout, or style.
 
-**spendly-quality-reviewer** receives:
+**fincheck-quality-reviewer** receives:
 - The combined git diff.
 - Spec file for context: `.claude/specs/$ARGUMENTS.md`
 - Source files to reference: `app.py`, `database/services.py`, `database/schemas.py`, and the `templates/` directory.
-- Instruction: Review only the changed code for quality, algorithmic performance (N+1 queries), and strict adherence to the Spendly stack (SQLAlchemy 2.0, Tailwind, Alpine, Decimal discipline). Do not comment on security concerns.
+- Instruction: Review only the changed code for quality, algorithmic performance (N+1 queries), and strict adherence to the FinCheck stack (SQLAlchemy 2.0, Tailwind, Alpine, Decimal discipline). Do not comment on security concerns.
 
 ---
 
@@ -51,10 +51,10 @@ Structure the combined report exactly as follows:
 ## 🔍 Code Review Report — `$ARGUMENTS`
 
 ### 🛡️ Security Findings
-[Insert spendly-security-reviewer agent output here]
+[Insert fincheck-security-reviewer agent output here]
 
 ### 💎 Quality & Architecture Findings
-[Insert spendly-quality-reviewer agent output here]
+[Insert fincheck-quality-reviewer agent output here]
 
 ---
 

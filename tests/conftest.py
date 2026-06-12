@@ -1,5 +1,5 @@
 """
-conftest.py — shared pytest fixtures for Spendly tests.
+conftest.py — shared pytest fixtures for FinCheck tests.
 
 Database strategy: tests run against the real Postgres instance
 (same connection used by the app: localhost:5544). Each fixture that
@@ -48,7 +48,7 @@ def app():
             "TEST_DATABASE_URL",
             flask_app.config.get(
                 "SQLALCHEMY_DATABASE_URI",
-                "postgresql+psycopg2://spendly:spendly@localhost:5544/spendly",
+                "postgresql+psycopg2://fincheck:fincheck@localhost:5544/fincheck",
             ),
         ),
     )
@@ -98,7 +98,7 @@ def client(app):
 # Demo user fixture
 # ---------------------------------------------------------------------------
 
-_DEMO_EMAIL = "demo@spendly.dev"
+_DEMO_EMAIL = "demo@fincheck.dev"
 _DEMO_PASSWORD = "Demo@1234"
 
 
@@ -250,7 +250,7 @@ def auth_client(app, demo_user):
 # Second (isolated) user fixture
 # ---------------------------------------------------------------------------
 
-_SECOND_EMAIL = "second_tester_unique@spendly-tests.io"
+_SECOND_EMAIL = "second_tester_unique@fincheck-tests.io"
 _SECOND_PASSWORD = "Test@5678"
 
 

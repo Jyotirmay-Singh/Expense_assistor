@@ -24,7 +24,7 @@ Implementation divergences from spec (accounted for in tests):
   - Template context includes ``raw_start``, ``raw_end``, ``range_error``,
     and ``today_ist`` in addition to the keys listed in the spec.
 
-Seed data (8 expenses, all May 2026, demo@spendly.dev / Demo@1234):
+Seed data (8 expenses, all May 2026, demo@fincheck.dev / Demo@1234):
   Electricity bill  2200.00  Bills          2026-05-01
   Groceries         1850.50  Food           2026-05-03
   Metro pass         500.00  Transport      2026-05-05

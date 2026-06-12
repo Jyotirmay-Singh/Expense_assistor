@@ -16,7 +16,7 @@ Coverage:
 # ─── No new fixtures required ─────────────────────────────────────────────────
 # All required fixtures are already provided by tests/conftest.py:
 #   client               — unauthenticated test client
-#   auth_client          — test client logged in as demo@spendly.dev
+#   auth_client          — test client logged in as demo@fincheck.dev
 #   demo_user            — the seeded demo User object
 #   demo_expenses        — 8 seeded Expense rows for demo_user (yields list[Expense])
 #   db_session           — SQLAlchemy session inside an active app context
@@ -575,7 +575,7 @@ def test_add_expense_post_without_csrf_token_returns_400(app, demo_user):
             csrf_app.config["WTF_CSRF_ENABLED"] = False
             login_resp = csrf_client.post(
                 "/login",
-                data={"email": "demo@spendly.dev", "password": "Demo@1234"},
+                data={"email": "demo@fincheck.dev", "password": "Demo@1234"},
                 follow_redirects=False,
             )
             assert login_resp.status_code == 302, (
@@ -612,7 +612,7 @@ def test_edit_expense_post_without_csrf_token_returns_400(
             csrf_app.config["WTF_CSRF_ENABLED"] = False
             login_resp = csrf_client.post(
                 "/login",
-                data={"email": "demo@spendly.dev", "password": "Demo@1234"},
+                data={"email": "demo@fincheck.dev", "password": "Demo@1234"},
                 follow_redirects=False,
             )
             assert login_resp.status_code == 302
@@ -646,7 +646,7 @@ def test_delete_expense_post_without_csrf_token_returns_400(
             csrf_app.config["WTF_CSRF_ENABLED"] = False
             login_resp = csrf_client.post(
                 "/login",
-                data={"email": "demo@spendly.dev", "password": "Demo@1234"},
+                data={"email": "demo@fincheck.dev", "password": "Demo@1234"},
                 follow_redirects=False,
             )
             assert login_resp.status_code == 302

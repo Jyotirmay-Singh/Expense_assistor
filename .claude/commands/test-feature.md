@@ -1,5 +1,5 @@
 ---
-description: Writes and runs spec-driven pytest suites for a specific Spendly feature. Pass the spec name as an argument e.g. /test-feature 05-dashboard-backend
+description: Writes and runs spec-driven pytest suites for a specific FinCheck feature. Pass the spec name as an argument e.g. /test-feature 05-dashboard-backend
 allowed-tools: Bash(pytest)
 ---
 
@@ -15,7 +15,7 @@ If `.claude/specs/$ARGUMENTS.md` (or `specs/$ARGUMENTS.md`) does not exist, stop
 
 ## Step 1: Write Tests
 
-Invoke the **spendly-qa-agent** (Test Writer) subagent with the following context:
+Invoke the **fincheck-qa-agent** (Test Writer) subagent with the following context:
 
 - **Spec file to base tests on**: `.claude/specs/$ARGUMENTS.md` (or `specs/$ARGUMENTS.md`)
 - **Source files to read for structure**: `tests/conftest.py` (for existing fixtures), `app.py`, and the `database/` directory.
@@ -26,13 +26,13 @@ Invoke the **spendly-qa-agent** (Test Writer) subagent with the following contex
   - Auth guards & user data isolation
   - `Decimal` type discipline and `ZoneInfo("Asia/Kolkata")` timezone constraints.
 
-Wait for `spendly-qa-agent` to fully complete and confirm the test file has been written before proceeding to Step 2.
+Wait for `fincheck-qa-agent` to fully complete and confirm the test file has been written before proceeding to Step 2.
 
 ---
 
 ## Step 2: Run Tests
 
-Once the test writer has finished, invoke the **spendly-test-runner** subagent with the following context:
+Once the test writer has finished, invoke the **fincheck-test-runner** subagent with the following context:
 
 - **Test file to execute**: The exact file created in Step 1.
 - **Spec file for context**: `.claude/specs/$ARGUMENTS.md` (or `specs/$ARGUMENTS.md`)
@@ -47,7 +47,7 @@ Once the test writer has finished, invoke the **spendly-test-runner** subagent w
 - Do NOT start Step 2 until Step 1 is fully complete and the file is saved to disk.
 - Do NOT attempt to fix or modify any application code yourself, regardless of what the test results show. Your job is reporting.
 - Do NOT run any tests beyond the specific feature test file.
-- If `spendly-qa-agent` reports it could not write the test file (e.g., missing dependencies or missing spec), stop and report the reason — do NOT proceed to Step 2.
+- If `fincheck-qa-agent` reports it could not write the test file (e.g., missing dependencies or missing spec), stop and report the reason — do NOT proceed to Step 2.
 
 ---
 
@@ -61,9 +61,9 @@ After both subagents complete, produce a combined summary formatted exactly like
 *Provide a concise bulleted list of the tests that were generated, with a 5-10 word description of which spec requirement each validates.*
 
 **Step 2 — Test Results**
-*Mirror the `spendly-test-runner`'s structured report (Summary table, Root Causes for failures, and Architecture Flags).*
+*Mirror the `fincheck-test-runner`'s structured report (Summary table, Root Causes for failures, and Architecture Flags).*
 
 **Verdict**
 *Must be one of:*
-- ✅ **Ready for code review** — All tests pass and align with Spendly architecture.
+- ✅ **Ready for code review** — All tests pass and align with FinCheck architecture.
 - ❌ **Needs fixes** — List the specific files and lines the developer needs to fix based on the runner's analysis.

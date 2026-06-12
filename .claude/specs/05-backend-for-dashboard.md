@@ -106,7 +106,7 @@ No new dependencies. `typing.Literal` is stdlib; `decimal.Decimal` and `datetime
 ## Definition of done
 
 - [ ] `GET /dashboard` as a logged-out user redirects to `/login` (existing `@login_required` behaviour, unchanged).
-- [ ] `GET /dashboard` (no query string) as the seeded `demo@spendly.dev` user renders `dashboard.html` with HTTP 200 and shows: total spent for May 2026, expense count `8`, average computed correctly, a category breakdown that sums to the same total, the 5 most recent demo expenses, and a daily series with one row per distinct seed-expense date.
+- [ ] `GET /dashboard` (no query string) as the seeded `demo@fincheck.dev` user renders `dashboard.html` with HTTP 200 and shows: total spent for May 2026, expense count `8`, average computed correctly, a category breakdown that sums to the same total, the 5 most recent demo expenses, and a daily series with one row per distinct seed-expense date.
 - [ ] `GET /dashboard?period=last_month` renders the previous calendar month's data; for the demo user against the frozen 2026-05-22 "today", that means April 2026 with all zeros and the empty-state rows.
 - [ ] `GET /dashboard?period=all_time` renders aggregations over every expense the user has (no date filter applied) — verifiable by cross-checking against `SELECT SUM(amount), COUNT(*) FROM expenses WHERE user_id=<id>;` in `psql`.
 - [ ] `GET /dashboard?period=garbage` falls back to `this_month` and returns HTTP 200 (no 400, no 500, no exception in the logs).
@@ -116,4 +116,4 @@ No new dependencies. `typing.Literal` is stdlib; `decimal.Decimal` and `datetime
 - [ ] `compute_dashboard` issues only parameterised queries — verifiable by setting `SQLALCHEMY_ECHO=True` locally and confirming every emitted SQL statement uses `%(param)s`-style bind parameters, never inlined literals from f-strings.
 - [ ] The `/dashboard` route function body contains no `select(...)`, `func.*`, or `db.session.execute(...)` — all query construction lives in `database/services.py`.
 - [ ] `ruff check .` and `ruff format --check .` pass with zero warnings.
-- [ ] Manual smoke test: log in as `demo@spendly.dev` → land on `/dashboard` → cycle through all three period values via the selector → verify the numbers match expectations against the seed data → register a second user → confirm dashboard isolation → log out → confirm `/dashboard` redirects to `/login`.
+- [ ] Manual smoke test: log in as `demo@fincheck.dev` → land on `/dashboard` → cycle through all three period values via the selector → verify the numbers match expectations against the seed data → register a second user → confirm dashboard isolation → log out → confirm `/dashboard` redirects to `/login`.

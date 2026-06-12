@@ -186,7 +186,7 @@ def seed_db(app: Flask) -> None:
         demo = User(
             name="Demo User",
             display_name="Demo",
-            email="demo@spendly.dev",
+            email="demo@fincheck.dev",
             default_currency="INR",
             terms_accepted_at=_utcnow(),
         )

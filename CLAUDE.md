@@ -2,14 +2,14 @@
 
 ## Project overview
 
-Spendly is a personal expense tracking application built on Flask. It uses Flask-SQLAlchemy 3.x (with SQLAlchemy 2.0 typed mappings) against PostgreSQL for the data layer, server-rendered Jinja2 templates for the UI, and Pydantic v2 for input validation. The goal is a small, secure, maintainable codebase — no Single Page Application bloat.
+FinCheck is a personal expense tracking application built on Flask. It uses Flask-SQLAlchemy 3.x (with SQLAlchemy 2.0 typed mappings) against PostgreSQL for the data layer, server-rendered Jinja2 templates for the UI, and Pydantic v2 for input validation. The goal is a small, secure, maintainable codebase — no Single Page Application bloat.
 
 ---
 
 ## Architecture
 
 ```text
-spendly/
+fincheck/
 ├── app.py                # Flask application factory + route registrations
 ├── database/
 │   ├── db.py             # SQLAlchemy models, Flask extensions (db, migrate, login_manager, csrf), seed_db
@@ -65,7 +65,7 @@ spendly/
 ```bash
 # Infrastructure (PostgreSQL)
 docker compose up -d
-docker compose ps          # verify spendly_postgres is healthy
+docker compose ps          # verify fincheck_postgres is healthy
 
 # Install dependencies
 pip install -r requirements.txt
